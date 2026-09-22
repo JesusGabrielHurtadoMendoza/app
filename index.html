@@ -1,0 +1,2962 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Solo Nosotros</title>
+<meta name="description" content="Un espacio privado para ustedes dos: fotos, música compartida, preguntas diarias, jueguitos y mensajes en vivo."/>
+<meta name="theme-color" content="#E1436B"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Nosotros"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32"/>
+<link rel="apple-touch-icon" href="icons/icon-180.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com">
+<link rel="preconnect" href="https://solo-nosotros-1b53b-default-rtdb.firebaseio.com">
+<!-- La fuente ya no bloquea la primera pintura de la pantalla: se pide con baja
+     prioridad y se activa cuando llega, así la app se ve casi al instante. -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Figtree:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Figtree:wght@400;500;600;700;800&display=swap"></noscript>
+<style>
+  :root{
+    --bg:#FFF1E9; --surface:#FFFFFF; --surface-2:#FFE3D3;
+    --ink:#3B1F2B; --ink-soft:#8A6275;
+    --accent:#E1436B; --accent-2:#F5A742; --accent-3:#6C4B8E;
+    --good:#3F9C6C; --line:rgba(59,31,43,.12);
+    --shadow:0 10px 28px rgba(59,31,43,.12);
+    --a-color:#E1436B; --b-color:#6C4B8E;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1E1220; --surface:#2B1B2E; --surface-2:#3A2440;
+      --ink:#FBEDE7; --ink-soft:#CBA3B6;
+      --accent:#FF6B93; --accent-2:#FFC169; --accent-3:#C09EE0;
+      --good:#7CC99A; --line:rgba(251,237,231,.14);
+      --shadow:0 10px 28px rgba(0,0,0,.4);
+      --a-color:#FF6B93; --b-color:#C09EE0;
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    background:var(--bg);color:var(--ink);font-family:'Figtree',system-ui,sans-serif;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  h1,h2,h3,.display{font-family:'Fraunces',Georgia,serif;text-wrap:balance;}
+  button{font-family:inherit;}
+  img{max-width:100%;}
+  [hidden]{display:none!important;}
+  ::selection{background:var(--accent);color:#fff;}
+
+  #app{display:flex;flex-direction:column;height:100%;max-width:560px;margin:0 auto;position:relative;}
+
+  header.top{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--line);
+    flex:0 0 auto;
+  }
+  .brand{display:flex;align-items:center;gap:10px;min-width:0;}
+  .brand .heart-mark{font-size:22px;line-height:1;}
+  .brand-names{display:flex;flex-direction:column;min-width:0;}
+  .brand-names b{font-family:'Fraunces',serif;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .brand-names span{font-size:11.5px;color:var(--ink-soft);}
+  .status-pill{
+    display:flex;align-items:center;gap:6px;background:var(--surface-2);border-radius:999px;
+    padding:6px 10px;font-size:12px;font-weight:700;white-space:nowrap;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ink-soft);flex:0 0 auto;}
+  .dot.on{background:var(--good);box-shadow:0 0 0 3px rgba(63,156,108,.25);}
+  .streak{color:var(--accent-2);}
+
+  main{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px 16px 24px;}
+  section.tab{display:none;flex-direction:column;gap:14px;}
+  section.tab.active{display:flex;}
+
+  .card{
+    background:var(--surface);border-radius:20px;padding:18px;box-shadow:var(--shadow);
+    border:1px solid var(--line);
+  }
+  .card h2{margin:0 0 4px;font-size:19px;font-weight:600;}
+  .card h3{margin:0 0 8px;font-size:15px;font-weight:600;}
+  .muted{color:var(--ink-soft);font-size:13.5px;line-height:1.5;}
+  .eyebrow{
+    font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--accent);margin:0 0 6px;
+  }
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    border:none;border-radius:14px;padding:12px 18px;font-weight:700;font-size:14.5px;
+    cursor:pointer;background:var(--accent);color:#fff;transition:transform .15s ease, opacity .15s ease;
+    text-decoration:none;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn.secondary{background:var(--surface-2);color:var(--ink);}
+  .btn.ghost{background:transparent;color:var(--accent);padding:10px 12px;}
+  .btn.block{width:100%;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  input[type="text"], input[type="file"], textarea{
+    width:100%;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);
+    border-radius:12px;padding:11px 13px;font-family:inherit;font-size:14.5px;resize:vertical;
+  }
+  input[type="text"]:focus, textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  .banner{
+    background:var(--surface-2);border-radius:16px;padding:14px 16px;font-size:13.5px;
+    line-height:1.5;color:var(--ink);border:1px dashed var(--line);
+  }
+  .banner b{color:var(--accent);}
+
+  .onboard{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:32px 22px;text-align:center;}
+  .onboard .heart-mark{font-size:44px;}
+  .onboard h1{font-size:28px;margin:0;font-weight:600;}
+  .who-btn{
+    width:100%;max-width:320px;background:var(--surface);border:1.5px solid var(--line);
+    border-radius:16px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;color:var(--ink);
+    box-shadow:var(--shadow);
+  }
+
+  nav.tabbar{
+    flex:0 0 auto;display:flex;background:var(--surface);border-top:1px solid var(--line);
+    padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));
+  }
+  nav.tabbar button{
+    flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:6px 2px;color:var(--ink-soft);font-size:10.5px;font-weight:700;cursor:pointer;border-radius:10px;
+  }
+  nav.tabbar button .ic{font-size:19px;}
+  nav.tabbar button.active{color:var(--accent);}
+
+  .mood-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .mood-opt{
+    background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:10px 4px;
+    display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:10.5px;font-weight:600;
+    color:var(--ink);
+  }
+  .mood-opt .em{font-size:22px;}
+  .mood-opt.sel{border-color:var(--accent);background:rgba(225,67,105,.12);}
+  .partner-mood{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:14px;padding:12px;}
+  .partner-mood .em{font-size:28px;}
+
+  .row{display:flex;gap:10px;align-items:center;}
+  .between{justify-content:space-between;}
+
+  .avatar{
+    width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:13px;color:#fff;flex:0 0 auto;
+  }
+
+  .q-item{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;}
+  .q-item:first-child{border-top:none;padding-top:0;margin-top:0;}
+  .q-text{font-weight:700;font-size:14.5px;margin-bottom:8px;}
+  .ans-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .ans-col label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);display:block;margin-bottom:4px;}
+  .locked{
+    background:var(--bg);border-radius:10px;padding:10px;font-size:13px;color:var(--ink-soft);
+    display:flex;align-items:center;gap:6px;min-height:40px;
+  }
+  .reveal{background:var(--bg);border-radius:10px;padding:10px;font-size:13.5px;min-height:40px;}
+
+  .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .photo-grid .ph{
+    position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--surface-2);
+    cursor:pointer;
+  }
+  .photo-grid .ph img{width:100%;height:100%;object-fit:cover;display:block;}
+  .photo-grid .ph .tag{
+    position:absolute;bottom:4px;left:4px;width:18px;height:18px;border-radius:50%;
+    font-size:9px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;
+  }
+  .lightbox{
+    position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;z-index:50;padding:24px;gap:12px;
+  }
+  .lightbox img{max-width:100%;max-height:70vh;border-radius:14px;}
+  .lightbox p{color:#fff;font-size:14px;text-align:center;}
+
+  .tot-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .tot-opt{
+    background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:16px 8px;
+    text-align:center;font-weight:700;font-size:14px;cursor:pointer;
+  }
+  .tot-opt .em{font-size:26px;display:block;margin-bottom:6px;}
+  .tot-opt.picked{border-color:var(--accent);background:rgba(225,67,105,.12);}
+  .match-badge{
+    display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border-radius:999px;
+    padding:6px 12px;font-weight:800;font-size:13px;color:var(--accent);
+  }
+
+  .wheel-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 0;}
+  .wheel-face{
+    width:180px;height:180px;border-radius:50%;background:conic-gradient(
+      var(--accent) 0deg 90deg, var(--accent-2) 90deg 180deg, var(--accent-3) 180deg 270deg, var(--good) 270deg 360deg
+    );display:flex;align-items:center;justify-content:center;position:relative;transition:transform 3.2s cubic-bezier(.17,.67,.16,1);
+    box-shadow:var(--shadow);
+  }
+  .wheel-face::after{content:"";position:absolute;inset:14px;border-radius:50%;background:var(--surface);}
+  .wheel-face .pin{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:22px;z-index:2;}
+  .wheel-result{font-family:'Fraunces',serif;font-size:19px;font-weight:600;text-align:center;min-height:28px;}
+  .history-item{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:6px 0;border-top:1px solid var(--line);}
+  .history-item:first-child{border-top:none;}
+
+  .live-box{background:var(--bg);border-radius:16px;padding:14px;min-height:120px;}
+  .bubble{
+    background:var(--surface);border-radius:16px;padding:12px 14px;font-size:15px;line-height:1.5;
+    min-height:26px;word-break:break-word;box-shadow:var(--shadow);
+  }
+  .typing-live{width:100%;border:none;background:transparent;font-size:16px;font-family:inherit;color:var(--ink);
+    resize:none;min-height:90px;}
+  .typing-live:focus{outline:none;}
+  .caret{display:inline-block;width:2px;height:16px;background:var(--accent);vertical-align:middle;animation:blink 1s step-end infinite;}
+  @keyframes blink{50%{opacity:0;}}
+
+  .fab-heart{
+    position:fixed;right:calc(18px + (100vw - 560px) / 2);bottom:96px;width:54px;height:54px;border-radius:50%;background:var(--accent);
+    color:#fff;font-size:22px;border:none;box-shadow:var(--shadow);cursor:pointer;z-index:20;
+  }
+  @media (max-width:560px){ .fab-heart{ right:18px; } }
+  .flying-heart{position:fixed;font-size:26px;pointer-events:none;z-index:60;animation:floatUp 1.6s ease-out forwards;}
+  @keyframes floatUp{
+    0%{transform:translateY(0) scale(.6);opacity:0;}
+    15%{opacity:1;transform:translateY(-10px) scale(1);}
+    100%{transform:translateY(-220px) scale(1.1) rotate(12deg);opacity:0;}
+  }
+
+  .love-note{background:var(--bg);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-top:8px;}
+  .love-note .meta{font-size:10.5px;color:var(--ink-soft);margin-top:4px;}
+
+  .song-item{
+    display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:14px;
+    padding:10px 12px;margin-top:8px;
+  }
+  .song-item .note-em{font-size:24px;flex:0 0 auto;}
+  .song-item .song-info{flex:1;min-width:0;}
+  .song-item .song-title{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .song-item .song-meta{font-size:11.5px;color:var(--ink-soft);}
+  .song-item .btn{padding:8px 12px;font-size:12.5px;flex:0 0 auto;}
+
+  .settings-link{text-align:center;padding:6px 0 2px;}
+  .settings-link button{background:none;border:none;color:var(--ink-soft);font-size:12px;text-decoration:underline;cursor:pointer;}
+
+  .ttt-status{text-align:center;font-weight:700;font-size:14.5px;margin:2px 0 14px;min-height:20px;}
+  .ttt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:250px;margin:0 auto;}
+  .ttt-cell{
+    aspect-ratio:1;background:var(--bg);border:1.5px solid var(--line);border-radius:14px;
+    display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;cursor:pointer;
+    transition:transform .1s ease;
+  }
+  .ttt-cell:active{transform:scale(.95);}
+  .ttt-cell.disabled{cursor:default;}
+  .ttt-cell.win{background:rgba(225,67,105,.18);border-color:var(--accent);}
+
+  .theme-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:10px;}
+  .theme-swatch{
+    aspect-ratio:1;border-radius:14px;cursor:pointer;border:2.5px solid transparent;
+    display:flex;align-items:center;justify-content:center;position:relative;
+  }
+  .theme-swatch.sel{border-color:var(--ink);}
+  .theme-swatch.sel::after{content:"✓";color:#fff;font-weight:800;font-size:15px;text-shadow:0 1px 2px rgba(0,0,0,.5);}
+  .theme-label{font-size:10px;font-weight:700;color:var(--ink-soft);text-align:center;margin-top:4px;}
+
+  .game-pills{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;-webkit-overflow-scrolling:touch;}
+  .game-pill{
+    flex:0 0 auto;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;
+    padding:9px 14px;font-size:13px;font-weight:700;color:var(--ink-soft);cursor:pointer;white-space:nowrap;
+  }
+  .game-pill.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .game-panel{display:none;flex-direction:column;gap:14px;}
+  .game-panel.active{display:flex;}
+
+  .memo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .memo-cell{
+    aspect-ratio:1;background:var(--accent);border-radius:12px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:22px;
+    transition:transform .25s ease, background .15s ease;
+  }
+  .memo-cell.open{background:var(--surface-2);}
+  .memo-cell.matched{background:rgba(63,156,108,.22);cursor:default;}
+
+  .bucket-item{
+    display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px solid var(--line);
+  }
+  .bucket-item:first-child{border-top:none;}
+  .bucket-check{
+    width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);flex:0 0 auto;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;margin-top:1px;
+  }
+  .bucket-check.done{background:var(--good);border-color:var(--good);}
+  .bucket-text{flex:1;font-size:14px;line-height:1.4;}
+  .bucket-text.done{text-decoration:line-through;color:var(--ink-soft);}
+  .bucket-del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:15px;padding:2px 4px;flex:0 0 auto;}
+
+  .toast-msg{
+    position:fixed;bottom:calc(90px + env(safe-area-inset-bottom,0px));left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:999px;
+    font-size:13px;font-weight:700;opacity:0;transition:opacity .25s ease, transform .25s ease;
+    z-index:80;pointer-events:none;max-width:80vw;text-align:center;
+  }
+  .toast-msg.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  nav.tabbar button{position:relative;}
+  nav.tabbar button.has-new::after{
+    content:"";position:absolute;top:3px;left:calc(50% + 8px);width:9px;height:9px;border-radius:50%;
+    background:var(--accent);box-shadow:0 0 0 2px var(--surface);
+  }
+  .app-banner{
+    margin:8px 12px 0;padding:12px 14px;border-radius:14px;background:var(--surface-2);color:var(--ink);
+    font-size:13.5px;line-height:1.45;border:1px solid var(--line);display:flex;flex-direction:column;gap:8px;
+  }
+  .app-banner .row{flex-wrap:wrap;}
+  .q-old-note{display:block;font-size:10.5px;color:var(--ink-soft);margin-top:4px;}
+  .qh-block{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;}
+  .qh-block:first-of-type{border-top:none;margin-top:6px;padding-top:0;}
+  .qh-when{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+  .qh-q{font-weight:700;font-size:13.5px;margin:10px 0 6px;}
+  .qh-a{font-size:13px;background:var(--bg);border-radius:10px;padding:8px 10px;margin-bottom:4px;}
+  .notif-status{font-size:12.5px;color:var(--ink-soft);margin:6px 0 0;}
+  .topic-box{font-family:monospace;font-size:13px;background:var(--bg);border-radius:10px;padding:8px 10px;word-break:break-all;flex:1;}
+
+  .tot-opt{position:relative;}
+  .tot-their-badge{
+    position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;
+    color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 4px rgba(0,0,0,.25);
+  }
+
+  .td-cats{display:flex;gap:6px;overflow-x:auto;margin:10px 0 2px;-webkit-overflow-scrolling:touch;}
+  .td-cat{
+    flex:0 0 auto;background:var(--bg);border:1.5px solid var(--line);border-radius:999px;
+    padding:7px 12px;font-size:12px;font-weight:700;color:var(--ink-soft);cursor:pointer;white-space:nowrap;
+  }
+  .td-cat.active{background:var(--accent-3);border-color:var(--accent-3);color:#fff;}
+
+  .voice-item{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-top:1px solid var(--line);}
+  .voice-item:first-child{border-top:none;}
+  .voice-item audio{width:100%;height:34px;}
+  .voice-who{font-size:12px;font-weight:800;}
+  .voice-meta{font-size:10.5px;color:var(--ink-soft);}
+  #recordBtn.recording{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  .together-card{background:linear-gradient(135deg,var(--accent) 0%,var(--accent-3) 100%);color:#fff;border:none;text-align:center;}
+  .together-card .eyebrow{color:rgba(255,255,255,.85);}
+  .together-card h2{color:#fff;}
+  .together-card p{color:rgba(255,255,255,.92);}
+  .together-days{font-size:34px;font-weight:800;margin:0;line-height:1.1;}
+  .together-label{font-size:12.5px;font-weight:700;margin:2px 0 12px;text-transform:uppercase;letter-spacing:.04em;opacity:.9;}
+  .together-quote{font-size:14.5px;font-style:italic;margin:0;line-height:1.4;padding-top:10px;border-top:1px solid rgba(255,255,255,.25);}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px;}
+  .stat-tile{background:var(--bg);border-radius:12px;padding:10px;text-align:center;}
+  .stat-num{font-size:22px;font-weight:800;color:var(--accent);}
+  .stat-label{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+
+  .nickname-tag{
+    display:inline-flex;align-items:center;gap:6px;background:var(--bg);border-radius:999px;
+    padding:6px 10px 6px 12px;font-size:13px;margin:6px 6px 0 0;
+  }
+  .nickname-tag button{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:12px;padding:0 2px;}
+
+  .capsule-item{background:var(--bg);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-top:8px;}
+  .capsule-item .meta{font-size:10.5px;color:var(--ink-soft);margin-top:4px;}
+  .capsule-locked{opacity:.7;font-style:italic;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top" id="topbar" hidden>
+    <div class="brand">
+      <span class="heart-mark">💞</span>
+      <div class="brand-names">
+        <b id="namesLine">Solo Nosotros</b>
+        <span id="subLine">un rincón para los dos</span>
+      </div>
+    </div>
+    <div class="row" style="gap:8px;">
+      <span class="status-pill"><span class="dot" id="connDot"></span><span id="connLabel">…</span></span>
+      <span class="status-pill streak">🔥 <span id="streakCount">0</span></span>
+    </div>
+  </header>
+
+  <div id="appBanner" class="app-banner" hidden></div>
+
+  <div id="onboardScreen" class="onboard">
+    <span class="heart-mark">💌</span>
+    <h1>Solo Nosotros</h1>
+    <p class="muted" id="onboardMsg">Cargando su espacio…</p>
+    <div id="onboardActions" style="display:flex;flex-direction:column;gap:12px;width:100%;align-items:center;"></div>
+  </div>
+
+  <main id="mainArea" hidden>
+    <section class="tab" id="tab-inicio">
+      <div class="card together-card" id="togetherCard" hidden>
+        <p class="together-days" id="togetherDays"></p>
+        <p class="together-label">juntos, un día a la vez 💞</p>
+        <p class="together-quote" id="togetherQuote"></p>
+      </div>
+      <div class="card">
+        <h3>📊 Nuestras estadísticas</h3>
+        <div class="stats-grid" id="statsGrid"></div>
+      </div>
+      <div class="card" id="notifCard">
+        <h3>🔔 Avisos</h3>
+        <p class="muted">Te avisa cuando tu pareja entra a la app o llena algo nuevo (notitas, fotos, canciones, preguntas, audios, planes…).</p>
+        <button class="btn block" id="enableNotifBtn" style="margin-top:8px;">🔔 Activar avisos en este celular</button>
+        <p class="notif-status" id="notifStatus"></p>
+        <div id="pushSetup" style="margin-top:14px;"></div>
+      </div>
+      <div class="card">
+        <h3>📅 Próxima fecha especial</h3>
+        <p class="muted" id="specialDateCountdown">Todavía no han puesto una fecha.</p>
+        <div class="row" style="gap:8px;margin-top:8px;">
+          <input type="date" id="specialDateInput" style="flex:1;"/>
+          <button class="btn secondary" id="setSpecialDateBtn">Guardar</button>
+        </div>
+      </div>
+      <div class="card">
+        <p class="eyebrow">✨ Sorpresa</p>
+        <h2>Plan random de hoy</h2>
+        <p class="muted" id="surpriseIdea">Toca el botón para ver una idea.</p>
+        <button class="btn secondary block" id="surpriseBtn">🎲 Otra idea</button>
+      </div>
+      <div class="card">
+        <p class="eyebrow">😘 Piropo</p>
+        <h2>Piropo random</h2>
+        <p class="muted" id="piropoText">Toca el botón para mandarle un piropo.</p>
+        <button class="btn secondary block" id="piropoBtn">💘 Otro piropo</button>
+      </div>
+      <div class="card" id="nicknamesCard">
+        <h3>💞 Apodos</h3>
+        <p class="muted">Guarden los apodos cariñosos que se usan entre ustedes.</p>
+        <div class="row" style="margin-top:8px;">
+          <input type="text" id="nicknameInput" placeholder="Ej. Gordi, Amor, Bebé…" maxlength="40"/>
+          <button class="btn" id="addNicknameBtn">Agregar</button>
+        </div>
+        <div id="nicknameList"></div>
+      </div>
+      <div class="card">
+        <p class="eyebrow" id="dateLabel">Hoy</p>
+        <h2>¿Cómo se sienten hoy?</h2>
+        <p class="muted">Toca un emoji para contarle a tu pareja cómo va tu día.</p>
+        <div class="mood-grid" id="moodGrid"></div>
+      </div>
+      <div class="card" id="partnerMoodCard">
+        <h3 id="partnerMoodTitle">Tu pareja</h3>
+        <div class="partner-mood" id="partnerMoodBody"></div>
+      </div>
+      <div class="card">
+        <h3>En vivo ahora</h3>
+        <p class="muted">Ve a la pestaña "En vivo" para escribirle algo que aparezca al instante en su pantalla.</p>
+      </div>
+      <div class="card" id="notesCard">
+        <div class="row between">
+          <h3 style="margin:0;">Notitas sorpresa</h3>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <input type="text" id="noteInput" placeholder="Escríbele una notita linda…" maxlength="180"/>
+          <button class="btn" id="sendNoteBtn">Enviar</button>
+        </div>
+        <div id="notesList"></div>
+      </div>
+      <div class="card" id="themeCard">
+        <h3>Personaliza el fondo</h3>
+        <p class="muted">Toca el botón para cambiar de color, o elige uno de la lista. Se guarda en este celular.</p>
+        <button class="btn block" id="cycleThemeBtn" style="margin-bottom:12px;">🎨 Cambiar color de fondo</button>
+        <div class="theme-grid" id="themeGrid"></div>
+        <div class="row between" style="margin-top:14px;">
+          <h3 style="margin:0;">🖌️ O elige tú los colores</h3>
+        </div>
+        <p class="muted" style="margin-top:2px;">Elige cualquier tono para el fondo y para el color principal.</p>
+        <div class="row" style="gap:14px;margin-top:8px;align-items:center;">
+          <label style="font-size:12px;display:flex;flex-direction:column;gap:4px;align-items:center;">Fondo<input type="color" id="customBgInput" value="#FFF1E9"/></label>
+          <label style="font-size:12px;display:flex;flex-direction:column;gap:4px;align-items:center;">Color principal<input type="color" id="customAccentInput" value="#E1436B"/></label>
+          <button class="btn secondary" id="applyCustomThemeBtn">Aplicar</button>
+        </div>
+      </div>
+      <div class="settings-link"><button id="renameBtn">cambiar mi nombre / mi lado</button></div>
+    </section>
+
+    <section class="tab" id="tab-fotos">
+      <div class="card">
+        <p class="eyebrow">Álbum</p>
+        <h2>Fotos de los dos</h2>
+        <p class="muted">Suban fotos que solo ustedes dos van a ver aquí.</p>
+        <label class="btn block" for="photoInput" id="uploadLabel">📷 Subir una foto</label>
+        <input type="file" id="photoInput" accept="image/*" hidden />
+      </div>
+      <div class="card">
+        <div class="photo-grid" id="photoGrid"></div>
+        <p class="muted" id="photoEmpty" hidden>Todavía no hay fotos. ¡Suban la primera!</p>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-musica">
+      <div class="card">
+        <p class="eyebrow">Su playlist</p>
+        <h2>Compártanse música</h2>
+        <p class="muted">Manda el link de una canción (Spotify, YouTube, Apple Music, la que sea) para que tu pareja la escuche cuando quiera.</p>
+        <input type="text" id="songTitle" placeholder="Título de la canción" maxlength="80" style="margin-bottom:8px;"/>
+        <input type="text" id="songArtist" placeholder="Artista (opcional)" maxlength="60" style="margin-bottom:8px;"/>
+        <input type="text" id="songLink" placeholder="Pega aquí el link (opcional)" maxlength="300" style="margin-bottom:10px;"/>
+        <button class="btn block" id="shareSongBtn">🎵 Compartir canción</button>
+      </div>
+      <div class="card">
+        <h3>Canciones que se han mandado</h3>
+        <div id="musicList"></div>
+        <p class="muted" id="musicEmpty" hidden>Todavía no se han compartido canciones. ¡Manda la primera!</p>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-preguntas">
+      <div class="card">
+        <p class="eyebrow" id="qDateLabel">Preguntas de este bloque</p>
+        <h2 id="qHeading">Para conocerse más</h2>
+        <p class="muted">Respondan cada quien por su lado. Cuando tu pareja también responda, se revela su respuesta. Cambian solas cada 3 horas, así que si dejan algo sin guardar, guárdenlo antes de que se refresquen.</p>
+      </div>
+      <div class="card" id="questionsList"></div>
+      <div class="card" id="questionsHistory" hidden></div>
+    </section>
+
+    <section class="tab" id="tab-juegos">
+      <div class="game-pills" id="gamePills">
+        <button class="game-pill active" data-game="gato">🎮 Gato</button>
+        <button class="game-pill" data-game="esto">🤔 Esto o Aquello</button>
+        <button class="game-pill" data-game="ruleta">🎡 Ruleta</button>
+        <button class="game-pill" data-game="verdad">💌 Verdad o Reto</button>
+        <button class="game-pill" data-game="memorama">🧠 Memorama</button>
+        <button class="game-pill" data-game="lista">📝 Planes pendientes</button>
+      </div>
+
+      <div class="game-panel active" data-game="gato">
+        <div class="card" id="tttCard">
+          <p class="eyebrow">Gato en vivo</p>
+          <h2>Retísense a un gato</h2>
+          <p class="ttt-status" id="tttStatus">Cargando…</p>
+          <p class="muted" id="tttScore" style="text-align:center;margin:-6px 0 10px;"></p>
+          <div class="ttt-grid" id="tttGrid"></div>
+          <button class="btn secondary block" id="tttResetBtn" style="margin-top:12px;">🔄 Empezar de nuevo</button>
+        </div>
+      </div>
+
+      <div class="game-panel" data-game="esto">
+        <div class="card">
+          <p class="eyebrow">Esto o Aquello</p>
+          <h2>¿Qué tanto combinan?</h2>
+          <p id="totMatch" class="match-badge" hidden></p>
+          <p class="tiny-hint" id="totHint" style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;">Toca tu opción. El círculo de color con la inicial marca lo que eligió tu pareja.</p>
+          <div id="totList"></div>
+        </div>
+      </div>
+
+      <div class="game-panel" data-game="ruleta">
+        <div class="card">
+          <p class="eyebrow">Ruleta de planes</p>
+          <h2>¿Qué hacemos hoy?</h2>
+          <div class="wheel-wrap">
+            <div class="wheel-face" id="wheelFace"><span class="pin">📍</span></div>
+            <p class="wheel-result" id="wheelResult">Gira para descubrir un plan</p>
+            <button class="btn" id="spinBtn">🎡 Girar la ruleta</button>
+          </div>
+          <div id="wheelHistory" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="game-panel" data-game="verdad">
+        <div class="card">
+          <p class="eyebrow">Verdad o Reto</p>
+          <h2>¿Verdad o reto?</h2>
+          <p class="muted">Elige una categoría y una carta, y respondan juntos o hagan el reto ahí mismo.</p>
+          <div class="td-cats" id="tdCats"></div>
+          <div class="row" style="gap:10px;margin-top:10px;">
+            <button class="btn block" id="drawTruthBtn">💬 Verdad</button>
+            <button class="btn secondary block" id="drawDareBtn">🔥 Reto</button>
+          </div>
+          <div class="card" id="drawnCardBox" style="margin-top:14px;" hidden>
+            <p class="q-text" id="drawnCardText" style="margin:0;"></p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Cartas anteriores</h3>
+          <div id="tdHistory"></div>
+        </div>
+      </div>
+
+      <div class="game-panel" data-game="memorama">
+        <div class="card">
+          <p class="eyebrow">Memorama</p>
+          <h2>Encuentra las parejas</h2>
+          <p class="muted" id="memoStatus">Toca dos cartas para encontrar la pareja.</p>
+          <div class="memo-grid" id="memoGrid"></div>
+          <button class="btn secondary block" id="memoResetBtn" style="margin-top:12px;">🔄 Jugar de nuevo</button>
+        </div>
+      </div>
+
+      <div class="game-panel" data-game="lista">
+        <div class="card">
+          <p class="eyebrow">Cosas por hacer juntos</p>
+          <h2>Su lista de planes pendientes</h2>
+          <p class="muted">Agreguen ideas de cosas que quieren hacer juntos y márquenlas cuando las cumplan.</p>
+          <div class="row" style="margin-top:8px;">
+            <input type="text" id="bucketInput" placeholder="Ej. Ir a la playa juntos…" maxlength="120"/>
+            <button class="btn" id="addBucketBtn">Agregar</button>
+          </div>
+          <div id="bucketList" style="margin-top:10px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-vivo">
+      <div class="card">
+        <p class="eyebrow">En vivo</p>
+        <h2>Lo que escribes, lo ve al instante</h2>
+        <p class="muted">Mientras los dos tengan esta pantalla abierta, cada letra que escribas aparece en su celular, y viceversa.</p>
+        <textarea class="typing-live" id="liveInput" placeholder="Escribe algo para tu pareja…" maxlength="240"></textarea>
+      </div>
+      <div class="card">
+        <h3 id="partnerLiveTitle">Tu pareja está escribiendo…</h3>
+        <div class="live-box"><div class="bubble" id="partnerBubble"><span class="muted">Nada por ahora</span></div></div>
+      </div>
+      <div class="card">
+        <h3>📹 Videollamada</h3>
+        <p class="muted">Abran una videollamada privada al instante, sin cuentas ni apps extra. Manda el link a tu pareja o dile que toque el mismo botón desde su celular.</p>
+        <button class="btn block" id="videoCallBtn">📹 Iniciar videollamada</button>
+      </div>
+      <div class="card">
+        <h3>🎤 Notas de voz</h3>
+        <p class="muted">Grábale un audito corto (máximo 20 segundos) para que lo escuche cuando quiera.</p>
+        <button class="btn secondary block" id="recordBtn">🎤 Grabar audio</button>
+        <p class="muted" id="recordStatus" style="margin-top:6px;font-size:12px;min-height:16px;"></p>
+        <div id="voiceList"></div>
+      </div>
+      <div class="card">
+        <h3>🕰️ Cápsula del tiempo</h3>
+        <p class="muted">Escribe un mensaje que se quede guardado y cerrado hasta la fecha que elijas.</p>
+        <textarea class="typing-live" id="capsuleInput" placeholder="Escribe el mensaje para el futuro…" maxlength="500" style="min-height:70px;"></textarea>
+        <div class="row" style="gap:8px;margin-top:8px;">
+          <input type="date" id="capsuleDateInput" style="flex:1;"/>
+          <button class="btn" id="addCapsuleBtn">🔒 Guardar</button>
+        </div>
+        <div id="capsuleList"></div>
+      </div>
+      <button class="fab-heart" id="heartBtn" title="Mandar corazón">❤️</button>
+    </section>
+  </main>
+
+  <nav class="tabbar" id="tabbar" hidden>
+    <button data-tab="inicio" class="active"><span class="ic">🏠</span>Inicio</button>
+    <button data-tab="fotos"><span class="ic">📷</span>Fotos</button>
+    <button data-tab="musica"><span class="ic">🎵</span>Música</button>
+    <button data-tab="preguntas"><span class="ic">💬</span>Preguntas</button>
+    <button data-tab="juegos"><span class="ic">🎲</span>Jueguitos</button>
+    <button data-tab="vivo"><span class="ic">✨</span>En vivo</button>
+  </nav>
+  <div class="toast-msg" id="toastMsg"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot,
+  collection, addDoc, query, orderBy, limit, increment
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import {
+  getDatabase, ref as rref, onValue, set as rset, remove as rremove, onDisconnect
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+import { firebaseConfig } from "./firebase-config.js";
+
+var app, auth, db, rtdb;
+var fbReady = false, fbError = null;
+try{
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  rtdb = getDatabase(app);
+  fbReady = true;
+}catch(e){
+  fbError = e;
+  console.error("Firebase init failed", e);
+}
+
+/* ---------------- data banks ---------------- */
+var QUESTIONS = [
+ "¿Cuál fue el momento en que sentiste que de verdad te enamoraste de mí?",
+ "¿Qué recuerdo tuyo conmigo te saca una sonrisa sin que yo lo sepa?",
+ "Si pudiéramos viajar juntos a cualquier lugar del mundo ahora mismo, ¿a dónde iríamos?",
+ "¿Qué es algo pequeño que hago que te hace sentir muy querido o querida?",
+ "¿Cómo te imaginas un domingo perfecto para los dos?",
+ "¿Qué canción te recuerda a nosotros?",
+ "¿Qué es algo que admiras de mí y que casi nunca me dices?",
+ "¿Cuál crees que fue nuestra mejor cita hasta ahora?",
+ "¿Qué te gustaría que hiciéramos juntos por primera vez este año?",
+ "¿Cuál es tu comida favorita para compartir conmigo?",
+ "¿Qué palabra usarías para describir cómo te sientes cuando estás conmigo?",
+ "¿Qué es algo de tu día a día que te gustaría contarme más seguido?",
+ "¿Qué es lo que más te gusta hacer cuando estamos en silencio, sin hablar?",
+ "¿Qué apodo o mote cariñoso te gustaría que usara más contigo?",
+ "¿Cómo te gustaría que celebráramos nuestro próximo aniversario?",
+ "¿Qué es algo nuevo que te gustaría aprender juntos, tipo un curso o un hobby?",
+ "¿Cuál ha sido el regalo que más te ha gustado que te haya dado?",
+ "¿Qué te hace sentir apoyado o apoyada por mí en tus días difíciles?",
+ "¿Qué es una meta que tienes para los próximos meses y en la que te gustaría mi ayuda?",
+ "¿Qué es algo gracioso que recuerdas de cuando empezamos a andar?",
+ "¿Prefieres una noche de película en casa o salir a algún lugar nuevo, y por qué?",
+ "¿Qué es algo que te gustaría que dijera en voz alta más seguido?",
+ "¿Cómo te gustaría que fuera un fin de semana ideal para los dos dentro de un año?",
+ "¿Qué es una tradición pequeña que te gustaría que empezáramos entre nosotros?",
+ "¿Qué es lo que más valoras de cómo resolvemos nuestros desacuerdos?",
+ "¿Qué mascota te gustaría que tuviéramos algún día, si pudiéramos?",
+ "¿Qué es un lugar de tu ciudad al que te gustaría llevarme?",
+ "¿Qué es algo que te enseñé sin darme cuenta?",
+ "¿Qué te haría sentir más consentido o consentida esta semana?",
+ "¿Cuál es tu manera favorita de que te demuestre cariño: palabras, detalles, tiempo juntos o abrazos?",
+ "¿Qué es algo tonto que hacemos juntos que en realidad te encanta?",
+ "¿Qué recuerdo de nuestra primera cita todavía te da nervios o ternura?",
+ "¿Qué comida te gustaría que cocináramos juntos algún día?",
+ "¿Qué es algo que te dio miedo contarme al principio de la relación?",
+ "¿Cómo describirías nuestra relación en solo tres palabras?",
+ "¿Qué es un sueño o meta grande que tienes y que quisieras compartir más conmigo?",
+ "¿Qué serie o película te gustaría que viéramos juntos pronto?",
+ "¿Qué es algo que te gustaría que hiciéramos menos por celular y más en persona?",
+ "¿Qué momento del día te acuerdas más de mí cuando no estamos juntos?",
+ "¿Qué es algo que te gustaría que celebráramos más seguido, aunque sea chiquito?",
+ "¿Qué es lo primero que notaste de mí cuando nos conocimos?",
+ "¿Qué es algo que hago que te da mucha risa?",
+ "¿Cómo te gustaría que fuera nuestra casa o espacio ideal juntos algún día?",
+ "¿Qué es algo que aprendiste de una relación pasada que aplicas con más cuidado conmigo?",
+ "¿Qué detalle chiquito te encantaría que tuviera contigo esta semana?",
+ "¿Qué es una isla desierta contigo: qué tres cosas llevarías?",
+ "¿Qué es algo que te gustaría que superáramos juntos este año?",
+ "¿Cuál crees que es nuestra mayor fortaleza como pareja?",
+ "¿Qué es algo de mí que te sorprendió gratamente con el tiempo?",
+ "¿Qué es un plan espontáneo que te encantaría que hiciéramos este mes?",
+ "¿Qué es algo que quieres que sepa sobre cómo te gusta que te consuelen?",
+ "¿Qué es lo que más extrañas cuando pasamos tiempo separados?",
+ "¿Qué canción pondrías si hiciéramos un playlist de nuestra historia?",
+ "¿Qué es un logro tuyo del que te gustaría que estuviera más orgulloso u orgullosa?",
+ "¿Qué es algo que te gustaría que probáramos juntos, aunque nos dé un poco de miedo?",
+ "¿Qué es un recuerdo de la infancia que te gustaría contarme con más detalle?",
+ "¿Qué es lo que más te gusta de cómo nos comunicamos?",
+ "¿Qué es algo que podríamos hacer hoy mismo para sentirnos más cerca?",
+ "¿Qué es un piropo o cumplido que te encantaría escuchar más seguido?",
+ "¿Cómo te gustaría que fuera nuestro próximo viaje juntos?",
+ "¿Qué es lo primero que piensas cuando te despiertas y no estoy contigo?",
+ "¿Qué olor o aroma te recuerda a mí?",
+ "¿Qué es algo que te gustaría que hiciéramos exactamente igual dentro de 10 años?",
+ "¿Cuál es el chiste interno nuestro que más te gusta?",
+ "¿Qué es algo que yo hago sin darme cuenta que te enamora un poquito más?",
+ "¿Qué te gustaría que te preguntara más seguido sobre tu día?",
+ "¿Cuál crees que es el reto más grande que hemos superado juntos?",
+ "¿Qué es una app o red social por la que te gustaría que dejáramos el celular más tiempo?",
+ "¿Qué te gustaría que aprendiera a cocinar para ti?",
+ "¿Qué es algo pequeño que puedo hacer manana para alegrarte el día?",
+ "¿Cuál fue el momento en que sentiste que esto iba en serio?",
+ "¿Qué es una película o libro que te gustaría que viviéramos como si fuéramos los protagonistas?",
+ "¿Qué es algo de mi familia o mis amigos que te gusta mucho?",
+ "¿Qué gesto mío te da más paz cuando estás ansiosa o ansioso?",
+ "¿Qué es algo que te gustaría que celebráramos juntos este mes, aunque sea inventado?",
+ "¿Cuál es tu recuerdo favorito de alguno de nuestros viajes o salidas?",
+ "¿Qué es algo que admiras de cómo enfrento los problemas?",
+ "¿Qué te gustaría que hiciéramos la próxima vez que uno de los dos tenga un mal día?",
+ "¿Qué palabra en otro idioma describe mejor lo que sientes por mí?",
+ "¿Qué es un hábito mío que te gustaría adoptar?",
+ "¿Cómo te imaginas que seremos como pareja dentro de cinco años?",
+ "¿Qué es algo que te gustaría que hiciéramos juntos una vez al mes sin falta?",
+ "¿Qué es lo que más disfrutas de nuestras conversaciones antes de dormir?",
+ "¿Qué es algo que te dio mucha ternura de mí esta semana?",
+ "¿Qué momento del día sientes que somos más nosotros mismos, sin máscaras?",
+ "¿Qué comida o antojito te recuerda automáticamente a alguna cita nuestra?",
+ "¿Qué es algo que te gustaría regalarme si el dinero no fuera un problema?",
+ "¿Qué es una manía tuya que crees que me cuesta entender, pero que igual acepto?",
+ "¿Qué es algo que te gustaría que hiciéramos juntos por videollamada si estuviéramos lejos?",
+ "¿Cuál ha sido la sorpresa que más te ha gustado que te haya hecho?",
+ "¿Qué es algo que te gustaría escuchar de mí justo antes de dormir?",
+ "¿Qué actividad física o deporte te gustaría que hiciéramos juntos?",
+ "¿Qué es un miedo que tenías al empezar esta relación y que ya se te quitó?",
+ "¿Qué es algo que te gustaría que decoráramos o cambiáramos juntos en tu espacio?",
+ "¿Qué es una promesa chiquita que te gustaría que nos hiciéramos hoy?",
+ "¿Cuál es tu forma favorita de que te sorprenda en un día común, sin ocasión especial?",
+ "¿Qué es algo de nuestra rutina diaria que no cambiarías por nada?",
+ "¿Qué es un recuerdo con nuestras familias juntas que te gustó mucho?",
+ "¿Qué es algo que te gustaría intentar en la cocina, aunque salga mal la primera vez?",
+ "¿Qué es una meta financiera o de vida que te gustaría que persiguiéramos juntos?",
+ "¿Qué es lo que más te tranquiliza saber sobre nuestra relación?",
+ "¿Qué es algo gracioso que dirías que solo yo entiendo de ti?",
+ "¿Qué tipo de abrazo te gusta más y en qué momento del día lo necesitas más?",
+ "¿Qué es una tradición familiar tuya que te gustaría que adoptáramos como pareja?",
+ "¿Qué es algo que te gustaría que hiciéramos la próxima vez que llueva?",
+ "¿Cuál es la mejor decisión que hemos tomado juntos hasta ahora?",
+ "¿Qué es algo que te gustaría que dejáramos de posponer como pareja?",
+ "¿Qué es un detalle de nuestra primera conversación que todavía recuerdas?",
+ "¿Qué es algo que te gustaría que yo supiera hacer mejor para cuidarte?",
+ "¿Qué es una canción que te gustaría que fuera 'nuestra canción oficial' de aquí en adelante?",
+ "¿Qué es algo que has aprendido sobre el amor gracias a esta relación?",
+ "¿Qué es un lugar al que te gustaría regresar conmigo porque la primera vez fue especial?",
+ "¿Qué es algo que te gustaría escuchar de mí frente a otras personas?",
+ "¿Cómo te gustaría que resolviéramos un desacuerdo la próxima vez que pase?",
+ "¿Qué es algo que te encantaría que hiciéramos disfrazados o en algún tema random?",
+ "¿Qué es lo más romántico que hemos hecho sin planearlo?",
+ "¿Qué te gustaría que supiera sobre cómo te sientes querida o querido en el día a día?",
+ "¿Qué es algo que quieres lograr tú sola o solo, y en lo que igual quieres que te apoye?",
+ "¿Qué es un juego o actividad de niños que te gustaría que hiciéramos juntos por diversión?",
+ "¿Qué es algo bonito que dirías de nosotros si nos vieras desde afuera?"
+];
+
+var THIS_OR_THAT = [
+ ["Playa","🏖️","Montaña","🏔️"],
+ ["Noche de peli","🎬","Salir a bailar","💃"],
+ ["Café","☕","Té","🍵"],
+ ["Perros","🐶","Gatos","🐱"],
+ ["Desayunar tarde","🥞","Madrugar juntos","🌅"],
+ ["Viaje planeado","🗺️","Viaje improvisado","🎒"],
+ ["Mensajes de texto","💬","Llamada de voz","📞"],
+ ["Comida picante","🌶️","Comida dulce","🍰"],
+ ["Ciudad","🏙️","Pueblo tranquilo","🌳"],
+ ["Invierno","❄️","Verano","☀️"],
+ ["Regalos","🎁","Palabras bonitas","💌"],
+ ["Fiesta en casa","🎈","Cena tranquila","🕯️"],
+ ["Ahorrar","💰","Darse un gustito","🛍️"],
+ ["Concierto","🎤","Museo","🖼️"],
+ ["Deporte juntos","🏃","Videojuego juntos","🎮"],
+ ["Karaoke","🎶","Juegos de mesa","🎲"],
+ ["Acampar","⛺","Hotel de lujo","🏨"],
+ ["Cocinar en casa","🍳","Pedir comida","🥡"],
+ ["Ver el amanecer","🌄","Ver el atardecer","🌇"],
+ ["Sorpresas","🎉","Planear todo","📋"]
+];
+
+var WHEEL_IDEAS = [
+ "Noche de películas con palomitas caseras",
+ "Cita sorpresa en un lugar nuevo de la ciudad",
+ "Cocinar juntos una receta que nunca han hecho",
+ "Ver el atardecer desde algún mirador",
+ "Maratón de la serie que tienen pendiente",
+ "Ir por un helado y caminar sin rumbo",
+ "Noche de juegos de mesa o cartas",
+ "Escribirse una carta y leerla juntos",
+ "Salir a tomar fotos como turistas en su propia ciudad",
+ "Armar un playlist juntos con canciones de su historia",
+ "Picnic en un parque cercano",
+ "Noche de spa casero para los dos",
+ "Probar un restaurante o antojito nuevo",
+ "Karaoke en casa con las canciones favoritas",
+ "Ver el amanecer un sábado, aunque cueste madrugar",
+ "Hacer una lista de canciones y bailar en la sala",
+ "Explorar una colonia o barrio que no conozcan",
+ "Noche de tacos y plática sin celulares",
+ "Armar un rompecabezas o jugar algo de mesa nuevo",
+ "Escribirse 3 cosas que agradecen del otro y leerlas juntos",
+ "Ir a un mercado y comprar algo random para cocinar",
+ "Ver fotos viejas de cuando empezaron a andar",
+ "Hacer ejercicio o caminar juntos al aire libre",
+ "Planear (de broma o en serio) su próximo viaje soñado"
+];
+
+/* Generador de planes: combina actividad + toque especial + cuándo para
+   producir miles de combinaciones distintas, mezclado con la lista curada
+   de arriba para que también salgan ideas ya redactadas a mano. */
+var WHEEL_ACTS = [
+ "Cocinar juntos algo que nunca han probado hacer",
+ "Ir por un helado y caminar sin rumbo fijo",
+ "Armar un fuerte de cobijas y ver películas",
+ "Salir a tomar fotos como turistas en su ciudad",
+ "Hacer un picnic improvisado",
+ "Ir a un mercado y comprar algo random para cocinar",
+ "Escribirse cartas y leerlas en voz alta",
+ "Bailar en la sala con su playlist favorita",
+ "Hacer una lista de metas de pareja para este año",
+ "Ir a caminar viendo las estrellas",
+ "Jugar algo de mesa que no hayan jugado antes",
+ "Hacer un experimento culinario con lo que haya en el refri",
+ "Recrear su primera cita",
+ "Hacer un karaoke casero",
+ "Ir a explorar una calle o colonia nueva",
+ "Armar un álbum o carrete con sus mejores fotos juntos",
+ "Escribir 5 cosas que agradecen del otro y leerlas juntos",
+ "Planear (en serio o de broma) su próximo viaje soñado",
+ "Ver el amanecer o el atardecer juntos",
+ "Hacer una cena con velas en casa",
+ "Ir a un antojito o restaurante nuevo",
+ "Hacer una sesión de fotos improvisada los dos",
+ "Contarse cómo se imaginan dentro de 5 años",
+ "Hacer un maratón de la serie que tienen pendiente",
+ "Salir en bici o caminando sin destino",
+ "Prepararse un desayuno especial un día entre semana",
+ "Hacer un 'spa' casero para los dos",
+ "Ir a ver algo de arte, un mural o un museo",
+ "Armar juntos un rompecabezas",
+ "Escribir en un diario compartido su semana",
+ "Ver fotos o videos viejos de cuando empezaron a andar",
+ "Hacer ejercicio o estirar juntos",
+ "Cocinar el platillo favorito de la infancia de cada uno",
+ "Tener una noche sin celulares, solo platicar",
+ "Hacer una lista de canciones que cuenten su historia",
+ "Ir a comprar un antojo random y compartirlo",
+ "Aprender juntos un pasito de baile con un video",
+ "Escribirse una cosa que quieren mejorar en la relación, con cariño",
+ "Hacer un 'top 5' de sus recuerdos favoritos juntos",
+ "Regalarse algo pequeño y sorpresa, sin gastar mucho"
+];
+var WHEEL_TWISTS = [
+ "sin usar el celular",
+ "con la ropa más cómoda que tengan",
+ "grabando un video cortito del momento",
+ "tomándose una foto graciosa al final",
+ "escuchando solo canciones de hace unos años",
+ "con los ojos cerrados los primeros 10 segundos",
+ "turnándose para elegir cada paso",
+ "en silencio los primeros 2 minutos, solo disfrutando",
+ "con algo dulce de por medio",
+ "usando la palabra 'amor' de más ese rato jaja",
+ "con una vela encendida aunque sea de día",
+ "poniéndole un nombre chistoso al plan",
+ "con música de fondo elegida por el otro",
+ "tomándose el tiempo, sin prisa",
+ "contándose un secreto tonto que nunca se han dicho",
+ "con la luz apagada y solo velas o luces",
+ "riéndose de algo aunque sea forzado al inicio",
+ "vestidos un poco más elegantes de lo normal",
+ "con las manos entrelazadas todo el tiempo que se pueda",
+ "compartiendo del mismo plato o vaso",
+ "diciendo un 'te amo' al empezar y otro al terminar",
+ "sin planear nada más, solo dejándose llevar",
+ "con un brindis chistoso antes de empezar",
+ "haciendo como que es una cita de las primeras",
+ "con una canción especial sonando de fondo"
+];
+var WHEEL_WHENS = [
+ "hoy mismo",
+ "esta noche",
+ "el próximo fin de semana",
+ "antes de que acabe la semana",
+ "en su próximo día libre juntos",
+ "una tarde entre semana, aunque sea corto",
+ "el día que menos lo esperen",
+ "antes de que acabe el mes",
+ "en su próxima cita",
+ "un domingo tranquilo",
+ "cuando ambos tengan energía extra",
+ "de sorpresa, sin avisar con mucho tiempo",
+ "en su próximo aniversario o fecha especial",
+ "una noche que ambos estén libres",
+ "el fin de semana que menos lo planeen"
+];
+function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function generateWheelIdea(){
+  // 30% de las veces sale una idea ya redactada de la lista curada.
+  if(Math.random() < 0.3) return pickRandom(WHEEL_IDEAS);
+  var act = pickRandom(WHEEL_ACTS);
+  var s = act;
+  if(Math.random() < 0.65) s += ", "+pickRandom(WHEEL_TWISTS);
+  if(Math.random() < 0.55) s += " — "+pickRandom(WHEEL_WHENS);
+  return s;
+}
+var surpriseBtnEl = document.getElementById("surpriseBtn");
+var surpriseIdeaEl = document.getElementById("surpriseIdea");
+function showSurprise(){ if(surpriseIdeaEl) surpriseIdeaEl.textContent = "💡 "+generateWheelIdea(); }
+if(surpriseBtnEl) surpriseBtnEl.addEventListener("click", showSurprise);
+showSurprise();
+
+var TD_CATS = [
+ {id:"divertido", label:"😄 Divertido"},
+ {id:"profundo", label:"💭 Profundo"},
+ {id:"nostalgico", label:"📼 Nostálgico"},
+ {id:"picante", label:"🔥 Picante"}
+];
+var TD_BANK = {
+ divertido: {
+  truths: [
+   "¿Cuál es la cosa más random que te gusta de mí?",
+   "¿Qué comida mía o costumbre mía no soportabas al principio y ahora amas (o toleras)?",
+   "Si tuviéramos que ponerle nombre de pareja famosa a lo nuestro, ¿cuál sería?",
+   "¿Cuál es el apodo más ridículo que se te ocurre para mí en este momento?",
+   "¿Qué serie o película describe mejor nuestra relación y por qué?",
+   "¿Cuál es la cosa más chistosa que he hecho sin darme cuenta?",
+   "Si fuéramos personajes de caricatura, ¿cuáles seríamos?",
+   "¿Qué comida no compartirías conmigo ni aunque me estuviera muriendo de hambre?",
+   "¿Cuál crees que sería mi superpoder si tuviera uno?",
+   "¿Qué manía mía te da un poquito de risa (con cariño)?",
+   "Si tuviéramos que ganar un concurso de baile juntos, ¿lo lograríamos o nos correrían del escenario?",
+   "¿Cuál es el emoji que mejor me representa?"
+  ],
+  dares: [
+   "Dale a tu pareja 10 besitos rápidos ahora mismo.",
+   "Mándale un audio cantando un pedacito de 'su canción'.",
+   "Hazle un cumplido exagerado como si fuera una telenovela.",
+   "Mándale la foto más chistosa que tengas de los dos.",
+   "Baila 15 segundos con la canción que se te ocurra, y que te vea.",
+   "Hazle un masajito de manos de 1 minuto.",
+   "Mándale un mensaje de voz diciéndole por qué es tu persona favorita.",
+   "Hazle una pregunta random tipo 'esto o aquello' que no esté en la app.",
+   "Mándale un emoji-cuento: cuenta cómo se conocieron solo con emojis.",
+   "Imita la primera vez que te dijo 'te quiero' (exagerado, con drama).",
+   "Ponle un apodo nuevo y chistoso ahora mismo, para probarlo.",
+   "Cuéntale un chiste malo, de esos que dan risa por lo malo que es."
+  ]
+ },
+ profundo: {
+  truths: [
+   "¿Cuál es el recuerdo más bonito que tienes de nosotros?",
+   "¿Qué es algo que te dio pena decirme al principio de la relación?",
+   "¿Cuál es tu inseguridad más grande en esta relación, si tienes una?",
+   "¿Qué es algo que te encantaría que hiciéramos más seguido?",
+   "¿Cuál fue tu primera impresión de mí?",
+   "¿Qué es algo que cambiarías de nuestra rutina si pudieras?",
+   "¿Cuál ha sido el momento en el que te sentiste más orgulloso u orgullosa de mí?",
+   "¿Qué es algo que te gustaría que te preguntara más seguido?",
+   "¿Cuál es tu manera favorita de recibir cariño?",
+   "¿Qué es algo que aprendiste de ti mismo o misma gracias a esta relación?",
+   "¿Qué es algo que te gustaría que supiera sin que tuvieras que decírmelo?",
+   "¿Cuál es tu recuerdo favorito de alguna vez que discutimos y lo resolvimos bien?",
+   "¿Qué es un miedo que tienes sobre el futuro de nosotros, si tienes uno?",
+   "¿Qué es algo que agradeces mucho que yo haga por ti sin que lo pidas?",
+   "¿Cómo sabes, en los días difíciles, que esto sigue valiendo la pena?"
+  ],
+  dares: [
+   "Dile 3 cosas que amas de su personalidad, mirándola a los ojos.",
+   "Escríbele una notita de amor ahora mismo (ve a la pestaña de Inicio).",
+   "Dile un recuerdo random y bonito que tengas de los dos.",
+   "Cuéntale algo que te gustó de su look hoy o esta semana.",
+   "Dile una palabra cariñosa nueva que quieras usar con ella o él de ahora en adelante.",
+   "Cuéntale un plan que quieras hacer juntos pronto, con fecha tentativa.",
+   "Dile algo que admires de cómo trata a tu familia o amigos.",
+   "Dile la cosa que más admiras de cómo enfrenta sus problemas.",
+   "Cuéntale una meta personal que quieras lograr este año y cómo puede apoyarte.",
+   "Dile algo que hoy, en este momento, agradeces mucho de tenerla o tenerlo."
+  ]
+ },
+ nostalgico: {
+  truths: [
+   "¿Qué recuerdas del primer día que nos vimos?",
+   "¿Cuál fue el momento en el que sentiste que esto iba en serio?",
+   "¿Qué canción te recuerda a nuestros inicios?",
+   "¿Cuál fue nuestra primera cita de verdad, y qué recuerdas de ese día?",
+   "¿Qué mensaje o conversación de los primeros meses recuerdas con cariño?",
+   "¿Cómo describirías a la persona que eras antes de que empezáramos a andar?",
+   "¿Cuál fue la primera vez que pensaste 'me quiero quedar con esta persona'?",
+   "¿Qué fue lo primero que te gustó de mí, de verdad?",
+   "¿Recuerdas nuestra primera pelea? ¿Cómo se resolvió?",
+   "¿Qué es algo de nuestros inicios que hoy nos daría risa recordar?",
+   "¿Cuál ha sido el año más bonito de esta relación hasta ahora, y por qué?",
+   "¿Qué foto vieja de nosotros es tu favorita y por qué?"
+  ],
+  dares: [
+   "Cuéntale a tu pareja un recuerdo del primer mes que casi no menciona.",
+   "Busquen juntos la primera foto que se tomaron y platiquen del momento.",
+   "Recreen su primer 'hola' como si se acabaran de conocer.",
+   "Mándale la primera canción que asocies con los dos.",
+   "Cuéntale qué esperabas de esta relación al principio, y si se cumplió.",
+   "Búsquen su primera conversación de chat (si la tienen) y léanla juntos.",
+   "Dile qué extrañas de los inicios de la relación, si hay algo.",
+   "Cuéntale un plan de los inicios que nunca se cumplió, y si aún quieres hacerlo.",
+   "Descríbele cómo imaginabas su primera cita antes de que pasara.",
+   "Cuéntale qué fue lo que más te costó de adaptarte a la relación al inicio."
+  ]
+ },
+ picante: {
+  truths: [
+   "¿Qué es algo que te encantaría que probáramos en la intimidad de la pareja, en confianza?",
+   "¿Cuál es el momento en el que te sentiste más atraída o atraído por mí?",
+   "¿Qué gesto mío te desarma por completo?",
+   "¿Qué prenda o look mío te gusta más y por qué?",
+   "¿Cuál dirías que es nuestro lugar favorito para una escapada romántica?",
+   "¿Qué tan seguido te gustaría que fuéramos más detallistas el uno con el otro?",
+   "¿Qué tipo de sorpresa romántica te encantaría recibir de mí?",
+   "¿Cuál es el piropo o cumplido que más te gustó que te dijera?",
+   "¿Qué momento romántico juntos repetirías una y otra vez?",
+   "¿Qué te gustaría que hiciéramos más seguido para mantener la chispa?",
+   "¿Qué canción pondrías para una noche romántica con velas?",
+   "¿Qué detalle pequeño mío te sube el ánimo al instante?"
+  ],
+  dares: [
+   "Dale un beso lento de 10 segundos, sin prisa.",
+   "Susúrrale al oído algo que te guste de ella o él.",
+   "Dale un abrazo apretado por 30 segundos, piel con piel si se puede.",
+   "Dile, muy despacio y viéndola a los ojos, por qué te atrae tanto.",
+   "Planeen ahora mismo una noche romántica solo para los dos, con fecha.",
+   "Dale un masaje de hombros de 2 minutos, sin hablar.",
+   "Cuéntale una fantasía romántica (no explícita) que te gustaría vivir juntos.",
+   "Bailen bien pegados una canción lenta, aunque sea en la sala.",
+   "Dile la parte de su cuerpo que más te gusta, con cariño y respeto.",
+   "Prepárale un ambiente con velas o luces bajitas para esta noche.",
+   "Escríbele un mensaje coqueto para que lo lea más tarde en el día.",
+   "Dale un beso donde ella o él elija."
+  ]
+ }
+};
+var MEMO_EMOJIS = ["💛","🌻","💌","🎵","📸","🌙","☕","🧩"];
+
+var LOVE_QUOTES = [
+ "El amor no se mide en tiempo, se mide en ganas de seguir eligiéndose cada día.",
+ "De todas las personas del mundo, me alegra que hayamos coincidido justo tú y yo.",
+ "No hay lugar favorito, el lugar favorito es donde estás tú.",
+ "Contigo hasta los días normales se sienten especiales.",
+ "Amarte se me hace fácil, lo difícil sería no hacerlo.",
+ "Eres mi persona favorita para las cosas más simples y para las más grandes.",
+ "Cada día contigo es una razón más para creer en esto.",
+ "No busco la perfección, busco seguir construyendo esto contigo.",
+ "Contigo aprendí que el amor también es calma, y también es risa.",
+ "Que sea siempre nosotros contra el mundo, y el mundo contra nadie.",
+ "Mi lugar seguro tiene tu nombre.",
+ "Gracias por elegirme también en los días difíciles.",
+ "Contigo el 'para siempre' no asusta, se siente bien.",
+ "Eres de esas personas que llegan y hacen que todo tenga más sentido.",
+ "Lo nuestro no es perfecto, pero es real, y eso me basta.",
+ "Quiero seguir sumando recuerdos contigo, uno por uno.",
+ "Hoy, como todos los días, elijo quererte.",
+ "Contigo aprendí que el hogar no es un lugar, eres tú.",
+ "No hace falta una fecha especial para recordarte cuánto te quiero.",
+ "Eres mi ratito favorito del día, todos los días.",
+ "Gracias por hacer de lo cotidiano algo bonito.",
+ "Contigo hasta el silencio se siente cómodo.",
+ "Que cada 'buenos días' y cada 'buenas noches' sigan siendo nuestros.",
+ "Sigues siendo mi persona favorita, ni se pregunta."
+];
+function quoteOfPeriod(){
+  var idx = shuffledIdx(LOVE_QUOTES.length, seedFromStr("quote-"+todayStr()))[0] || 0;
+  return LOVE_QUOTES[idx];
+}
+function daysTogether(){
+  if(!STATE || !STATE.createdAt) return null;
+  var start = new Date(STATE.createdAt);
+  if(isNaN(start.getTime())) return null;
+  var startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  var now = new Date();
+  var nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var diff = Math.round((nowDay - startDay) / 86400000);
+  return diff < 0 ? 0 : diff;
+}
+function renderTogether(){
+  var card=document.getElementById("togetherCard");
+  var daysEl=document.getElementById("togetherDays");
+  var quoteEl=document.getElementById("togetherQuote");
+  if(!card) return;
+  var d = daysTogether();
+  if(d==null){ card.hidden=true; return; }
+  card.hidden=false;
+  daysEl.textContent = d===0 ? "Día 1 🌱" : d+" días";
+  quoteEl.textContent = "“"+quoteOfPeriod()+"”";
+}
+function renderStats(){
+  var el=document.getElementById("statsGrid");
+  if(!el || !STATE) return;
+  var d = daysTogether();
+  var tiles = [
+    {n: d==null?"–":d, l:"días juntos"},
+    {n: STATE.heartsSent||0, l:"corazones enviados"},
+    {n: PHOTOS.length, l:"fotos subidas"},
+    {n: NOTES.length, l:"notitas mandadas"},
+    {n: BUCKET.filter(function(b){ return b.done; }).length, l:"planes cumplidos"}
+  ];
+  el.innerHTML = tiles.map(function(t){
+    return '<div class="stat-tile"><div class="stat-num">'+esc(t.n)+'</div><div class="stat-label">'+esc(t.l)+'</div></div>';
+  }).join("");
+}
+function renderSpecialDate(){
+  var textEl=document.getElementById("specialDateCountdown");
+  var inputEl=document.getElementById("specialDateInput");
+  if(!textEl || !STATE) return;
+  if(STATE.specialDate){
+    if(inputEl && !inputEl.value) inputEl.value = STATE.specialDate;
+    var target = new Date(STATE.specialDate+"T00:00:00");
+    var now = new Date();
+    var todayDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var diff = Math.round((target - todayDay)/86400000);
+    if(diff > 0) textEl.textContent = "Faltan "+diff+" día"+(diff===1?"":"s")+" para su fecha especial 💞";
+    else if(diff === 0) textEl.textContent = "¡Es hoy! 🎉";
+    else textEl.textContent = "Esa fecha ya pasó, pon una nueva si quieren.";
+  } else {
+    textEl.textContent = "Todavía no han puesto una fecha.";
+  }
+}
+var setSpecialDateBtnEl = document.getElementById("setSpecialDateBtn");
+if(setSpecialDateBtnEl) setSpecialDateBtnEl.addEventListener("click", function(){
+  var inputEl=document.getElementById("specialDateInput");
+  var val = inputEl && inputEl.value;
+  if(!val || !ROLE || !docRef) return;
+  updateDoc(docRef, {specialDate: val}).then(function(){ toastMsg("📅 Fecha guardada"); }).catch(function(){});
+});
+
+/* ---------------- piropo random ---------------- */
+var PIROPOS = [
+ "Eres la mejor parte de mi día, sin excepción.",
+ "Cada vez que sonríes se me olvida de qué estábamos hablando.",
+ "Contigo hasta las cosas aburridas se sienten divertidas.",
+ "Tienes la energía que más me gusta del mundo.",
+ "Me encanta cómo te emocionas por las cosas pequeñas.",
+ "Eres de las personas más lindas que conozco, por dentro y por fuera.",
+ "No sé cómo lo haces, pero siempre me sacas una sonrisa.",
+ "Contigo se siente fácil, y eso no es poca cosa.",
+ "Eres mi lugar favorito para llegar al final del día.",
+ "Me gusta cómo me ves, como si de verdad valiera la pena.",
+ "Tu risa es de mis sonidos favoritos.",
+ "Eres exactamente la persona que necesitaba, sin saberlo.",
+ "Contigo aprendí que el amor también puede ser tranquilo.",
+ "Eres de las pocas personas con las que no tengo que fingir nada.",
+ "Me encanta lo detallista que eres, aunque tú no lo notes.",
+ "Eres mi persona favorita para no hacer nada juntos.",
+ "Cada día se me ocurre una razón nueva para quererte.",
+ "Contigo el tiempo se siente bien invertido.",
+ "Eres bonito/a hasta cuando no te lo propones.",
+ "Gracias por hacer que lo cotidiano se sienta especial."
+];
+var piropoBtnEl = document.getElementById("piropoBtn");
+var piropoTextEl = document.getElementById("piropoText");
+function showPiropo(){ if(piropoTextEl) piropoTextEl.textContent = "💘 "+PIROPOS[Math.floor(Math.random()*PIROPOS.length)]; }
+if(piropoBtnEl) piropoBtnEl.addEventListener("click", showPiropo);
+showPiropo();
+
+/* ---------------- apodos ---------------- */
+var NICKNAMES = [];
+document.getElementById("addNicknameBtn").addEventListener("click", addNickname);
+document.getElementById("nicknameInput").addEventListener("keydown", function(e){
+  if(e.key==="Enter") addNickname();
+});
+function addNickname(){
+  var input=document.getElementById("nicknameInput");
+  var text=(input.value||"").trim();
+  if(!text || !ROLE) return;
+  addDoc(collection(db,"nicknames"), {text:text, by:ROLE, ts:Date.now()})
+    .then(function(){ input.value=""; pingPartner("agregó un apodo nuevo 💞"); }).catch(function(){});
+}
+function renderNicknames(){
+  var el=document.getElementById("nicknameList");
+  if(!el || !STATE) return;
+  if(!NICKNAMES.length){ el.innerHTML='<p class="muted" style="margin-top:8px;">Todavía no hay apodos guardados.</p>'; return; }
+  el.innerHTML = NICKNAMES.map(function(n){
+    return '<span class="nickname-tag">'+esc(n.text)+'<button data-id="'+n.id+'">✕</button></span>';
+  }).join("");
+  Array.from(el.querySelectorAll("button")).forEach(function(btn){
+    btn.onclick=function(){ delFromCollection("nicknames", btn.getAttribute("data-id")); };
+  });
+}
+
+/* ---------------- utilidades de color (para el fondo personalizado) ---------------- */
+function hexToRgb(hex){
+  hex = (hex||"#000000").replace("#","");
+  if(hex.length===3) hex = hex.split("").map(function(c){ return c+c; }).join("");
+  var num = parseInt(hex,16) || 0;
+  return {r:(num>>16)&255, g:(num>>8)&255, b:num&255};
+}
+function rgbToHex(r,g,b){
+  return "#"+[r,g,b].map(function(v){
+    v = Math.max(0, Math.min(255, Math.round(v)));
+    var s = v.toString(16);
+    return s.length<2 ? "0"+s : s;
+  }).join("");
+}
+function mixHex(hex1, hex2, t){
+  var c1=hexToRgb(hex1), c2=hexToRgb(hex2);
+  return rgbToHex(c1.r+(c2.r-c1.r)*t, c1.g+(c2.g-c1.g)*t, c1.b+(c2.b-c1.b)*t);
+}
+function luminanceOf(hex){
+  var c=hexToRgb(hex);
+  var arr=[c.r,c.g,c.b].map(function(v){ v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4); });
+  return 0.2126*arr[0]+0.7152*arr[1]+0.0722*arr[2];
+}
+function hexToHsl(hex){
+  var c=hexToRgb(hex), r=c.r/255, g=c.g/255, b=c.b/255;
+  var max=Math.max(r,g,b), min=Math.min(r,g,b), h=0, s=0, l=(max+min)/2;
+  if(max!==min){
+    var d=max-min;
+    s = l>0.5 ? d/(2-max-min) : d/(max+min);
+    if(max===r) h=((g-b)/d + (g<b?6:0));
+    else if(max===g) h=(b-r)/d+2;
+    else h=(r-g)/d+4;
+    h/=6;
+  }
+  return {h:h*360, s:s*100, l:l*100};
+}
+function hslToHex(h,s,l){
+  h=((h%360)+360)%360; h/=360; s=Math.max(0,Math.min(100,s))/100; l=Math.max(0,Math.min(100,l))/100;
+  var r,g,b;
+  if(s===0){ r=g=b=l; }
+  else {
+    var hue2rgb=function(p,q,t){ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6) return p+(q-p)*6*t; if(t<1/2) return q; if(t<2/3) return p+(q-p)*(2/3-t)*6; return p; };
+    var q = l<0.5 ? l*(1+s) : l+s-l*s;
+    var p = 2*l-q;
+    r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
+  }
+  return rgbToHex(r*255,g*255,b*255);
+}
+
+var MOODS = [
+ {em:"🥰", label:"Enamorado/a"},
+ {em:"😌", label:"Tranquilo/a"},
+ {em:"😴", label:"Cansado/a"},
+ {em:"😄", label:"Feliz"},
+ {em:"😩", label:"Estresado/a"},
+ {em:"🥺", label:"Extrañándote"},
+ {em:"😤", label:"De mal humor"},
+ {em:"🤒", label:"Bajoneado/a"}
+];
+
+var THEMES = [
+ {id:"clasico", name:"Clásico", bg:"#FFF1E9", surface:"#FFFFFF", surface2:"#FFE3D3", ink:"#3B1F2B", inkSoft:"#8A6275", accent:"#E1436B", accent2:"#F5A742", accent3:"#6C4B8E", good:"#3F9C6C", a:"#E1436B", b:"#6C4B8E"},
+ {id:"lavanda", name:"Lavanda", bg:"#F3EEFC", surface:"#FFFFFF", surface2:"#E7DBF9", ink:"#2E2340", inkSoft:"#7C6C99", accent:"#8B5CF6", accent2:"#F2A6C8", accent3:"#4C6B8E", good:"#3F9C6C", a:"#8B5CF6", b:"#F2A6C8"},
+ {id:"menta", name:"Menta", bg:"#EAF7F1", surface:"#FFFFFF", surface2:"#D3EFE1", ink:"#1F3B31", inkSoft:"#5E8A78", accent:"#2FA88A", accent2:"#F5A742", accent3:"#4C7BA6", good:"#2FA88A", a:"#2FA88A", b:"#E1436B"},
+ {id:"atardecer", name:"Atardecer", bg:"#FFF0E3", surface:"#FFFFFF", surface2:"#FFD9B8", ink:"#3B2414", inkSoft:"#9A6F4B", accent:"#F0723C", accent2:"#F5C542", accent3:"#C0456B", good:"#3F9C6C", a:"#F0723C", b:"#C0456B"},
+ {id:"cielo", name:"Cielo", bg:"#EAF3FC", surface:"#FFFFFF", surface2:"#D6E8FA", ink:"#1E2C3B", inkSoft:"#6483A0", accent:"#2E86DE", accent2:"#F5A742", accent3:"#8B5CF6", good:"#3F9C6C", a:"#2E86DE", b:"#E1436B"},
+ {id:"noche", name:"Noche", bg:"#181021", surface:"#251A31", surface2:"#332140", ink:"#F3E9F7", inkSoft:"#B79FCB", accent:"#FF6B93", accent2:"#FFC169", accent3:"#9C7FE0", good:"#7CC99A", a:"#FF6B93", b:"#9C7FE0"},
+ {id:"coral", name:"Coral", bg:"#FFF2ED", surface:"#FFFFFF", surface2:"#FFDDD0", ink:"#3A1F17", inkSoft:"#9A6250", accent:"#FF5E4D", accent2:"#FFAA5C", accent3:"#6C4B8E", good:"#3F9C6C", a:"#FF5E4D", b:"#6C4B8E"},
+ {id:"bosque", name:"Bosque", bg:"#EEF6ED", surface:"#FFFFFF", surface2:"#D2E8CF", ink:"#1E2E1B", inkSoft:"#5C7A56", accent:"#3E7D44", accent2:"#A6C36B", accent3:"#4C7BA6", good:"#3F9C6C", a:"#3E7D44", b:"#C0456B"},
+ {id:"marino", name:"Marino", bg:"#151E2E", surface:"#1F2C42", surface2:"#2A3B57", ink:"#EAF0FB", inkSoft:"#9BAEC9", accent:"#4C8CE0", accent2:"#F5C542", accent3:"#8B5CF6", good:"#4FBF8C", a:"#4C8CE0", b:"#F2A6C8"},
+ {id:"dorado", name:"Dorado", bg:"#FFF8E6", surface:"#FFFFFF", surface2:"#FBE7A8", ink:"#3B2E0E", inkSoft:"#8A7440", accent:"#D9A400", accent2:"#F0723C", accent3:"#6C4B8E", good:"#3F9C6C", a:"#D9A400", b:"#6C4B8E"},
+ {id:"fucsia", name:"Fucsia", bg:"#FFF0F7", surface:"#FFFFFF", surface2:"#FFD3EA", ink:"#3B1030", inkSoft:"#9A5A80", accent:"#E0299B", accent2:"#FFA742", accent3:"#4C6B8E", good:"#3F9C6C", a:"#E0299B", b:"#4C6B8E"},
+ {id:"turquesa", name:"Turquesa", bg:"#E8FBF8", surface:"#FFFFFF", surface2:"#C6EEE8", ink:"#0F332E", inkSoft:"#4D8A80", accent:"#12A8A0", accent2:"#F5A742", accent3:"#8B5CF6", good:"#12A8A0", a:"#12A8A0", b:"#E1436B"},
+ {id:"vino", name:"Vino", bg:"#1F0F14", surface:"#2C1620", surface2:"#3D1E2C", ink:"#F6E7EC", inkSoft:"#C79AAA", accent:"#C0356B", accent2:"#E8A33D", accent3:"#8B5CF6", good:"#7CC99A", a:"#C0356B", b:"#8B5CF6"},
+ {id:"gris", name:"Gris elegante", bg:"#F2F2F2", surface:"#FFFFFF", surface2:"#E1E1E1", ink:"#26262B", inkSoft:"#77777F", accent:"#4A4A55", accent2:"#B08968", accent3:"#6C4B8E", good:"#3F9C6C", a:"#4A4A55", b:"#B08968"}
+];
+var THEME_KEY = "sn_theme_v1";
+var CUSTOM_BG_KEY = "sn_theme_custom_bg", CUSTOM_ACCENT_KEY = "sn_theme_custom_accent";
+function applyThemeVars(t){
+  var r = document.documentElement.style;
+  r.setProperty("--bg", t.bg); r.setProperty("--surface", t.surface); r.setProperty("--surface-2", t.surface2);
+  r.setProperty("--ink", t.ink); r.setProperty("--ink-soft", t.inkSoft);
+  r.setProperty("--accent", t.accent); r.setProperty("--accent-2", t.accent2); r.setProperty("--accent-3", t.accent3);
+  r.setProperty("--good", t.good); r.setProperty("--a-color", t.a); r.setProperty("--b-color", t.b);
+}
+function applyTheme(id){
+  var t = THEMES.find(function(x){ return x.id===id; }) || THEMES[0];
+  applyThemeVars(t);
+  try{ localStorage.setItem(THEME_KEY, t.id); }catch(e){}
+  renderThemePicker(t.id);
+}
+// Deriva un tema completo a partir de solo 2 colores que la persona elige
+// libremente (fondo + color principal), para que de verdad pueda usar
+// "cualquier color" y no solo los 14 temas ya armados.
+function deriveCustomTheme(bgHex, accentHex){
+  bgHex = bgHex || "#FFF1E9"; accentHex = accentHex || "#E1436B";
+  var isDark = luminanceOf(bgHex) < 0.45;
+  var surface = isDark ? mixHex(bgHex, "#FFFFFF", 0.12) : "#FFFFFF";
+  var surface2 = isDark ? mixHex(bgHex, "#FFFFFF", 0.20) : mixHex(bgHex, accentHex, 0.18);
+  var ink = isDark ? "#F5EEF2" : "#2B2030";
+  var inkSoft = mixHex(ink, bgHex, isDark ? 0.45 : 0.4);
+  var hsl = hexToHsl(accentHex);
+  var accent2 = hslToHex(hsl.h+40, Math.min(90,hsl.s), Math.min(75,Math.max(45,hsl.l+10)));
+  var bColor = hslToHex(hsl.h+150, Math.min(85,Math.max(45,hsl.s)), Math.min(70,Math.max(35,hsl.l)));
+  return {id:"custom", name:"Personalizado", bg:bgHex, surface:surface, surface2:surface2, ink:ink, inkSoft:inkSoft,
+    accent:accentHex, accent2:accent2, accent3:bColor, good:"#3F9C6C", a:accentHex, b:bColor};
+}
+function applyCustomTheme(bgHex, accentHex){
+  var t = deriveCustomTheme(bgHex, accentHex);
+  applyThemeVars(t);
+  try{
+    localStorage.setItem(THEME_KEY, "custom");
+    localStorage.setItem(CUSTOM_BG_KEY, bgHex);
+    localStorage.setItem(CUSTOM_ACCENT_KEY, accentHex);
+  }catch(e){}
+  renderThemePicker(null);
+}
+function renderThemePicker(selId){
+  var grid=document.getElementById("themeGrid");
+  if(!grid) return;
+  grid.innerHTML = THEMES.map(function(t){
+    // Dos mitades bien definidas (acento arriba, fondo abajo) para que se
+    // note el color real de cada tema, en vez de un degradado difuso.
+    // Todo el bloque (círculo + texto) es tocable, no solo el círculo,
+    // porque en el celular es fácil tocar la palabra y que "no pase nada".
+    return '<div class="theme-item" data-theme-id="'+t.id+'" style="display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:4px;">'+
+      '<div class="theme-swatch'+(t.id===selId?" sel":"")+'" data-theme-id="'+t.id+'" '+
+        'style="background:linear-gradient(180deg,'+t.accent+' 0%,'+t.accent+' 50%,'+t.bg+' 50%,'+t.bg+' 100%);'+
+        'box-shadow:inset 0 0 0 1.5px '+t.surface2+';pointer-events:none;"></div>'+
+      '<span class="theme-label" style="pointer-events:none;">'+esc(t.name)+'</span></div>';
+  }).join("");
+  Array.from(grid.querySelectorAll(".theme-item")).forEach(function(el){
+    el.onclick=function(){
+      var id = el.getAttribute("data-theme-id");
+      applyTheme(id);
+      var t = THEMES.find(function(x){ return x.id===id; });
+      toastMsg("🎨 Fondo cambiado a "+(t?t.name:id));
+    };
+  });
+}
+var cycleThemeBtnEl = document.getElementById("cycleThemeBtn");
+if(cycleThemeBtnEl) cycleThemeBtnEl.addEventListener("click", function(){
+  var current=null;
+  try{ current = localStorage.getItem(THEME_KEY); }catch(e){}
+  var idx = THEMES.findIndex(function(t){ return t.id===current; });
+  var next = THEMES[(idx+1+THEMES.length) % THEMES.length];
+  applyTheme(next.id);
+  toastMsg("🎨 Fondo cambiado a "+next.name);
+});
+var customBgInputEl = document.getElementById("customBgInput");
+var customAccentInputEl = document.getElementById("customAccentInput");
+var applyCustomThemeBtnEl = document.getElementById("applyCustomThemeBtn");
+if(applyCustomThemeBtnEl) applyCustomThemeBtnEl.addEventListener("click", function(){
+  applyCustomTheme(customBgInputEl.value, customAccentInputEl.value);
+  toastMsg("🎨 Colores personalizados aplicados");
+});
+
+/* ---------------- helpers ---------------- */
+function pad(n){ return String(n).length<2 ? "0"+n : ""+n; }
+function todayStr(d){ d=d||new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function addDays(dateStr, n){
+  var parts=dateStr.split("-").map(Number);
+  var d=new Date(parts[0],parts[1]-1,parts[2]);
+  d.setDate(d.getDate()+n);
+  return todayStr(d);
+}
+var QUESTION_PERIOD_MS = 3*60*60*1000; // las preguntas se refrescan cada 3 horas
+var QUESTIONS_PER_PERIOD = 6;
+function periodKey(){
+  return "p"+Math.floor(Date.now()/QUESTION_PERIOD_MS);
+}
+function periodRemainingLabel(){
+  var now=Date.now();
+  var next = (Math.floor(now/QUESTION_PERIOD_MS)+1) * QUESTION_PERIOD_MS;
+  var remain = Math.max(0, next-now);
+  var h = Math.floor(remain/3600000);
+  var m = Math.floor((remain%3600000)/60000);
+  return "nuevas en "+h+"h "+pad(m)+"m";
+}
+function emptyAnswers(){ return new Array(QUESTIONS_PER_PERIOD).fill(null); }
+function seedFromStr(s){
+  var h=0;
+  for(var i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))>>>0; }
+  return h;
+}
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffledIdx(n, seed){
+  var rand = mulberry32(seed);
+  var idx = [];
+  for(var i=0;i<n;i++) idx.push(i);
+  for(var i2=idx.length-1;i2>0;i2--){
+    var j = Math.floor(rand()*(i2+1));
+    var tmp=idx[i2]; idx[i2]=idx[j]; idx[j]=tmp;
+  }
+  return idx;
+}
+function questionIdsFor(periodStr){ return shuffledIdx(QUESTIONS.length, seedFromStr("q-"+periodStr)).slice(0,QUESTIONS_PER_PERIOD); }
+function pairIdsFor(dateStr){ return shuffledIdx(THIS_OR_THAT.length, seedFromStr("t-"+dateStr)).slice(0,6); }
+function esc(s){
+  var d = document.createElement("div");
+  d.textContent = s==null ? "" : String(s);
+  return d.innerHTML;
+}
+var toastTimer=null;
+function toastMsg(text){
+  var el=document.getElementById("toastMsg");
+  if(!el) return;
+  el.textContent = text;
+  el.classList.add("show");
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove("show"); }, 1800);
+}
+function otherRole(r){ return r==="a" ? "b" : "a"; }
+function roleColor(r){ return r==="a" ? "var(--a-color)" : "var(--b-color)"; }
+function initials(name){
+  if(!name) return "?";
+  return name.trim().slice(0,1).toUpperCase();
+}
+
+/* ---------------- state ---------------- */
+var ROLE_KEY = "sn_role_v1";
+var ROLE = localStorage.getItem(ROLE_KEY) || null;
+var APP_VERSION = "2026-09-22-avisos";
+var DEVICE_ID = null;
+try{ DEVICE_ID = localStorage.getItem("sn_device_v1"); }catch(e){}
+if(!DEVICE_ID){
+  DEVICE_ID = "d"+Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+  try{ localStorage.setItem("sn_device_v1", DEVICE_ID); }catch(e){}
+}
+var STATE = null;
+var PHOTOS = [], NOTES = [], SONGS = [], WHEEL_HIST = [];
+var docRef = null;
+var roomConnected = false, peerOnline = false;
+var heartInit = false, lastHeartNonce = null;
+var myUid = null;
+
+function initialState(){
+  return {
+    createdAt: new Date().toISOString(),
+    names:{a:null,b:null},
+    moods:{a:null,b:null},
+    streak:{count:0,lastDate:null},
+    questions:{},
+    thisOrThat:{},
+    heartsSent:0,
+    tttWins:{a:0,b:0},
+    specialDate:null
+  };
+}
+function myName(){ return STATE && ROLE ? STATE.names[ROLE] : null; }
+function partnerName(){ return STATE && ROLE ? STATE.names[otherRole(ROLE)] : null; }
+
+/* ---------------- dom refs ---------------- */
+var elTop=document.getElementById("topbar");
+var elOnboard=document.getElementById("onboardScreen");
+var elOnboardMsg=document.getElementById("onboardMsg");
+var elOnboardActions=document.getElementById("onboardActions");
+var elMain=document.getElementById("mainArea");
+var elTabbar=document.getElementById("tabbar");
+var elConnDot=document.getElementById("connDot");
+var elConnLabel=document.getElementById("connLabel");
+var elStreak=document.getElementById("streakCount");
+var elNamesLine=document.getElementById("namesLine");
+
+/* ---------------- theme (funciona sin Firebase) ---------------- */
+(function initTheme(){
+  var saved=null;
+  try{ saved=localStorage.getItem(THEME_KEY); }catch(e){}
+  if(saved==="custom"){
+    var bg=null, ac=null;
+    try{ bg=localStorage.getItem(CUSTOM_BG_KEY); ac=localStorage.getItem(CUSTOM_ACCENT_KEY); }catch(e){}
+    if(bg && ac){
+      applyCustomTheme(bg, ac);
+      var bgInp=document.getElementById("customBgInput"), acInp=document.getElementById("customAccentInput");
+      if(bgInp) bgInp.value=bg;
+      if(acInp) acInp.value=ac;
+      return;
+    }
+  }
+  applyTheme(saved || THEMES[0].id);
+})();
+
+/* ---------------- tabs ---------------- */
+document.getElementById("tabbar").addEventListener("click", function(e){
+  var btn = e.target.closest("button[data-tab]");
+  if(!btn) return;
+  showTab(btn.getAttribute("data-tab"));
+});
+function showTab(name){
+  document.querySelectorAll("section.tab").forEach(function(s){ s.classList.remove("active"); });
+  document.querySelectorAll("nav.tabbar button").forEach(function(b){ b.classList.remove("active"); });
+  var sec=document.getElementById("tab-"+name);
+  if(sec) sec.classList.add("active");
+  var btn=document.querySelector('nav.tabbar button[data-tab="'+name+'"]');
+  if(btn){ btn.classList.add("active"); btn.classList.remove("has-new"); }
+}
+
+/* ---------------- selector de juegos ---------------- */
+var GAME_KEY="sn_game_v1";
+document.getElementById("gamePills").addEventListener("click", function(e){
+  var btn=e.target.closest("button[data-game]");
+  if(!btn) return;
+  showGame(btn.getAttribute("data-game"));
+});
+function showGame(name){
+  document.querySelectorAll(".game-panel").forEach(function(p){ p.classList.toggle("active", p.getAttribute("data-game")===name); });
+  document.querySelectorAll(".game-pill").forEach(function(p){ p.classList.toggle("active", p.getAttribute("data-game")===name); });
+  try{ localStorage.setItem(GAME_KEY, name); }catch(e){}
+}
+(function initGamePanel(){
+  var saved=null;
+  try{ saved=localStorage.getItem(GAME_KEY); }catch(e){}
+  if(saved) showGame(saved);
+})();
+
+/* ---------------- onboarding ---------------- */
+function renderOnboard(){
+  if(fbError){
+    elOnboardMsg.innerHTML = "No se pudo conectar con la base de datos.<br/>Revisa que <b>firebase-config.js</b> tenga los datos correctos de tu proyecto de Firebase.";
+    elOnboardActions.innerHTML="";
+    return;
+  }
+  if(!STATE){
+    elOnboardMsg.textContent = "Cargando su espacio…";
+    elOnboardActions.innerHTML="";
+    return;
+  }
+  var names=STATE.names || {a:null,b:null};
+  elOnboardActions.innerHTML="";
+  if(!names.a && !names.b){
+    elOnboardMsg.textContent = "Parece que eres la primera persona en abrir esto. ¿Cómo te llamas?";
+    elOnboardActions.appendChild(buildNameForm("a"));
+  } else if(!names.a || !names.b){
+    var free = !names.a ? "a" : "b";
+    var other = names[free==="a"?"b":"a"];
+    elOnboardMsg.innerHTML = esc(other)+" ya está aquí 💞 ¿Cómo te llamas tú?";
+    elOnboardActions.appendChild(buildNameForm(free));
+    var altBtn=document.createElement("button");
+    altBtn.className="btn ghost";
+    altBtn.textContent="En realidad yo soy "+other;
+    altBtn.onclick=function(){ claimRole(free==="a"?"b":"a"); };
+    elOnboardActions.appendChild(altBtn);
+  } else {
+    elOnboardMsg.textContent = "¿Quién de los dos eres tú?";
+    ["a","b"].forEach(function(r){
+      var b=document.createElement("button");
+      b.className="who-btn";
+      b.textContent = names[r];
+      b.onclick=function(){ claimRole(r); };
+      elOnboardActions.appendChild(b);
+    });
+  }
+}
+function buildNameForm(role){
+  var wrap=document.createElement("div");
+  wrap.style.cssText="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;align-items:center;";
+  var input=document.createElement("input");
+  input.type="text"; input.placeholder="Tu nombre"; input.maxLength=24;
+  input.style.textAlign="center";
+  var btn=document.createElement("button");
+  btn.className="btn block"; btn.textContent="Continuar";
+  btn.onclick=function(){
+    var name=(input.value||"").trim();
+    if(!name){ input.focus(); return; }
+    ROLE=role; localStorage.setItem(ROLE_KEY, role);
+    updateDoc(docRef, {["names."+role]: name}).catch(function(){});
+    startPresence();
+    renderAll();
+  };
+  wrap.appendChild(input); wrap.appendChild(btn);
+  return wrap;
+}
+function claimRole(role){
+  ROLE=role; localStorage.setItem(ROLE_KEY, role);
+  startPresence();
+  renderAll();
+}
+document.getElementById("renameBtn").addEventListener("click", function(){
+  var name = prompt("Escribe tu nombre:", myName()||"");
+  if(name && name.trim() && docRef){
+    updateDoc(docRef, {["names."+ROLE]: name.trim()}).catch(function(){});
+  }
+});
+
+/* ---------------- top status ---------------- */
+function renderTop(){
+  if(!STATE || !ROLE){ elTop.hidden=true; return; }
+  elTop.hidden=false;
+  var a=STATE.names.a||"Persona A", b=STATE.names.b||"Persona B";
+  elNamesLine.textContent = a+" & "+b;
+  elStreak.textContent = (STATE.streak && STATE.streak.count) || 0;
+  var online = roomConnected && peerOnline;
+  elConnDot.classList.toggle("on", online);
+  elConnLabel.textContent = online ? "juntos ahora" : (roomConnected ? "en línea" : "sin conexión");
+}
+
+/* ---------------- mood ---------------- */
+function renderMood(){
+  var grid=document.getElementById("moodGrid");
+  grid.innerHTML="";
+  var mine = STATE && ROLE ? STATE.moods[ROLE] : null;
+  var today = todayStr();
+  MOODS.forEach(function(m){
+    var d=document.createElement("div");
+    d.className="mood-opt"+((mine && mine.date===today && mine.label===m.label) ? " sel" : "");
+    d.innerHTML = '<span class="em">'+m.em+'</span><span>'+esc(m.label)+'</span>';
+    d.onclick=function(){ setMood(m); };
+    grid.appendChild(d);
+  });
+
+  var pCard=document.getElementById("partnerMoodBody");
+  var pTitle=document.getElementById("partnerMoodTitle");
+  var pName = partnerName() || "Tu pareja";
+  pTitle.textContent = pName;
+  var theirs = STATE && ROLE ? STATE.moods[otherRole(ROLE)] : null;
+  if(theirs && theirs.date===today){
+    pCard.innerHTML = '<span class="em">'+theirs.em+'</span><div><b>'+esc(theirs.label)+'</b></div>';
+  } else {
+    pCard.innerHTML = '<span class="em">🤔</span><div class="muted">Todavía no ha puesto cómo se siente hoy.</div>';
+  }
+}
+function setMood(m){
+  if(!docRef || !ROLE) return;
+  var today = todayStr();
+  updateDoc(docRef, {["moods."+ROLE]: {em:m.em, label:m.label, date:today}})
+    .then(function(){ maybeAdvanceStreak(); pingPartner("hoy se siente "+m.em+" "+m.label, "mood"); }).catch(function(){});
+}
+function maybeAdvanceStreak(){
+  if(!STATE || !docRef) return;
+  var today=todayStr();
+  var a=STATE.moods.a, b=STATE.moods.b;
+  var bothToday = a && b && a.date===today && b.date===today;
+  if(!bothToday) return;
+  var streak = STATE.streak || {count:0,lastDate:null};
+  if(streak.lastDate===today) return;
+  var yesterday = addDays(today,-1);
+  var newCount = (streak.lastDate===yesterday) ? streak.count+1 : 1;
+  updateDoc(docRef, {streak:{count:newCount, lastDate:today}}).catch(function(){});
+}
+
+/* ---------------- love notes ---------------- */
+document.getElementById("sendNoteBtn").addEventListener("click", function(){
+  var input=document.getElementById("noteInput");
+  var text=(input.value||"").trim();
+  if(!text || !ROLE) return;
+  addDoc(collection(db,"notes"), {by:ROLE, text:text, ts:Date.now()})
+    .then(function(){ input.value=""; pingPartner("te dejó una notita 💌"); }).catch(function(){});
+});
+function delFromCollection(collName, id){
+  deleteDoc(doc(db,collName,id)).catch(function(){ alert("No se pudo borrar, intenta de nuevo."); });
+}
+function renderNotes(){
+  var list=document.getElementById("notesList");
+  if(!NOTES.length){ list.innerHTML='<p class="muted" style="margin-top:8px;">Manda la primera notita 💌</p>'; return; }
+  list.innerHTML = NOTES.slice(0,8).map(function(n){
+    var who = STATE.names[n.by] || (n.by==="a"?"Persona A":"Persona B");
+    var when = new Date(n.ts).toLocaleString("es-MX",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+    return '<div class="love-note" style="position:relative;padding-right:34px;"><b style="color:'+roleColor(n.by)+'">'+esc(who)+'</b>: '+esc(n.text)+
+      '<div class="meta">'+when+'</div>'+
+      '<button class="bucket-del" data-id="'+n.id+'" style="position:absolute;top:4px;right:4px;">✕</button></div>';
+  }).join("");
+  Array.from(list.querySelectorAll(".bucket-del")).forEach(function(btn){
+    btn.onclick=function(){ delFromCollection("notes", btn.getAttribute("data-id")); };
+  });
+}
+
+/* ---------------- music ---------------- */
+document.getElementById("shareSongBtn").addEventListener("click", function(){
+  var title=(document.getElementById("songTitle").value||"").trim();
+  var artist=(document.getElementById("songArtist").value||"").trim();
+  var link=(document.getElementById("songLink").value||"").trim();
+  if(!title || !ROLE) return;
+  if(link && !/^https?:\/\//i.test(link)) link = "https://"+link;
+  addDoc(collection(db,"songs"), {by:ROLE, title:title, artist:artist, link:link, ts:Date.now()}).then(function(){
+    pingPartner("te compartió una canción 🎵");
+    document.getElementById("songTitle").value="";
+    document.getElementById("songArtist").value="";
+    document.getElementById("songLink").value="";
+  }).catch(function(){});
+});
+function renderMusic(){
+  var list=document.getElementById("musicList");
+  var empty=document.getElementById("musicEmpty");
+  empty.hidden = SONGS.length>0;
+  list.innerHTML = SONGS.map(function(s){
+    var who = (STATE.names[s.by]) || "";
+    var openBtn = s.link ? '<a class="btn secondary" href="'+esc(s.link)+'" target="_blank" rel="noopener">Abrir</a>' : "";
+    return '<div class="song-item"><span class="note-em">🎵</span>'+
+      '<div class="song-info"><div class="song-title">'+esc(s.title)+'</div>'+
+      '<div class="song-meta">'+(s.artist?esc(s.artist)+" · ":"")+'mandada por <b style="color:'+roleColor(s.by)+'">'+esc(who)+'</b></div></div>'+
+      openBtn+'<button class="bucket-del" data-id="'+s.id+'">✕</button></div>';
+  }).join("");
+  Array.from(list.querySelectorAll(".bucket-del")).forEach(function(btn){
+    btn.onclick=function(){ delFromCollection("songs", btn.getAttribute("data-id")); };
+  });
+}
+
+/* ---------------- photos ----------------
+   No usamos Cloud Storage (Google ahora pide una cuenta de facturación
+   incluso para el plan gratis de Storage). En vez de eso, comprimimos la
+   foto en el navegador y la guardamos como una imagen chiquita directo en
+   Firestore, que sí es 100% gratis. Por eso hay un límite de tamaño. */
+var lightboxEl=null;
+function compressImageToDataURL(file, maxDim, maxBytes){
+  return new Promise(function(resolve, reject){
+    var img = new Image();
+    var reader = new FileReader();
+    reader.onerror = function(){ reject(new Error("no se pudo leer el archivo")); };
+    reader.onload = function(){
+      img.onerror = function(){ reject(new Error("no se pudo leer la imagen")); };
+      img.onload = function(){
+        var w = img.naturalWidth, h = img.naturalHeight;
+        var scale = Math.min(1, maxDim / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale));
+        var ch = Math.max(1, Math.round(h * scale));
+        var canvas = document.createElement("canvas");
+        canvas.width = cw; canvas.height = ch;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, cw, ch);
+        var quality = 0.85;
+        var dataUrl = canvas.toDataURL("image/jpeg", quality);
+        while (dataUrl.length > maxBytes && quality > 0.35){
+          quality -= 0.1;
+          dataUrl = canvas.toDataURL("image/jpeg", quality);
+        }
+        if (dataUrl.length > maxBytes){
+          reject(new Error("La foto sigue siendo muy grande, prueba con otra."));
+          return;
+        }
+        resolve(dataUrl);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+document.getElementById("photoInput").addEventListener("change", async function(e){
+  var file=e.target.files && e.target.files[0];
+  e.target.value="";
+  if(!file || !ROLE) return;
+  var label=document.getElementById("uploadLabel");
+  var prevText=label.textContent;
+  label.textContent="Subiendo…";
+  try{
+    // Fotos más chicas = la app carga mucho más rápido (antes cada foto podía
+    // pesar hasta 700KB; con 60 fotos eso son hasta 42MB en cada carga).
+    var dataUrl = await compressImageToDataURL(file, 1000, 320000);
+    await addDoc(collection(db,"photos"), {url:dataUrl, by:ROLE, ts:Date.now()});
+    pingPartner("subió una foto 📷");
+  }catch(err){
+    console.error(err);
+    alert("No se pudo subir la foto. " + (err && err.message ? err.message : "Intenta de nuevo."));
+  }
+  label.textContent=prevText;
+});
+function renderPhotos(){
+  var grid=document.getElementById("photoGrid");
+  var empty=document.getElementById("photoEmpty");
+  empty.hidden = PHOTOS.length>0;
+  grid.innerHTML = PHOTOS.map(function(p, i){
+    return '<div class="ph" data-i="'+i+'"><img src="'+esc(p.url)+'" loading="lazy"/>'+
+      '<span class="tag" style="background:'+roleColor(p.by)+'">'+esc(initials(STATE.names[p.by]))+'</span>'+
+      '<button class="bucket-del" data-id="'+p.id+'" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.5);color:#fff;border-radius:50%;">✕</button></div>';
+  }).join("");
+  Array.from(grid.querySelectorAll(".ph")).forEach(function(el){
+    el.onclick=function(e){
+      if(e.target && e.target.classList.contains("bucket-del")) return;
+      openLightbox(PHOTOS[Number(el.getAttribute("data-i"))]);
+    };
+  });
+  Array.from(grid.querySelectorAll(".bucket-del")).forEach(function(btn){
+    btn.onclick=function(e){ e.stopPropagation(); delFromCollection("photos", btn.getAttribute("data-id")); };
+  });
+}
+function openLightbox(p){
+  if(lightboxEl) lightboxEl.remove();
+  lightboxEl=document.createElement("div");
+  lightboxEl.className="lightbox";
+  var who = STATE.names[p.by] || "";
+  var when = new Date(p.ts).toLocaleString("es-MX",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+  lightboxEl.innerHTML = '<img src="'+esc(p.url)+'"/><p>Subida por '+esc(who)+' · '+when+'</p>';
+  lightboxEl.onclick=function(){ lightboxEl.remove(); lightboxEl=null; };
+  document.body.appendChild(lightboxEl);
+}
+
+/* ---------------- questions ---------------- */
+// Las preguntas cambian cada 3 horas. Antes, si tu pareja respondía en un
+// bloque y tú abrías la app en el siguiente, sus respuestas quedaban en el
+// bloque anterior y ya no se veían en ningún lado. Ahora:
+//  1) si una pregunta de este bloque ya la contestó en otro bloque, se muestra;
+//  2) abajo hay "Respuestas anteriores" con todo lo que han contestado.
+function qIdsOfBlock(key, block){
+  if(block && Array.isArray(block.qIds) && block.qIds.length) return block.qIds;
+  return questionIdsFor(key);
+}
+function blockTime(key, block){
+  if(/^p\d+$/.test(key)) return Number(key.slice(1))*QUESTION_PERIOD_MS;
+  var t = Date.parse(key);
+  if(!isNaN(t)) return t;
+  var at = block && block.at ? Math.max(block.at.a||0, block.at.b||0) : 0;
+  return at || 0;
+}
+function hasAny(arr){ return Array.isArray(arr) && arr.some(function(x){ return x!=null && String(x).trim()!==""; }); }
+// Última respuesta de una persona para cada pregunta (por id de pregunta), de cualquier bloque.
+function answersByQid(role){
+  var map = {};
+  var qs = (STATE && STATE.questions) || {};
+  Object.keys(qs).sort(function(x,y){ return blockTime(x,qs[x]) - blockTime(y,qs[y]); }).forEach(function(key){
+    var block = qs[key] || {};
+    var ans = block.answers && block.answers[role];
+    if(!Array.isArray(ans)) return;
+    var ids = qIdsOfBlock(key, block);
+    ans.forEach(function(a, i){
+      if(a!=null && String(a).trim()!=="" && ids[i]!=null) map[ids[i]] = {text:a, key:key};
+    });
+  });
+  return map;
+}
+function partnerCellHtml(pName, theirs, qid, period, theirMap){
+  if(theirs) return '<div class="reveal">'+esc(theirs)+'</div>';
+  var old = theirMap[qid];
+  if(old && old.key!==period){
+    return '<div class="reveal">'+esc(old.text)+'<span class="q-old-note">(la contestó en otro bloque)</span></div>';
+  }
+  return '<div class="locked">🔒 esperando a '+esc(pName)+'</div>';
+}
+var qAutoSaveTimer = null;
+function saveMyAnswers(period, qIds, silent){
+  var list=document.getElementById("questionsList");
+  if(!docRef || !ROLE || !list) return Promise.resolve();
+  var areas=list.querySelectorAll(".qAnswer");
+  if(!areas.length) return Promise.resolve();
+  var newAns=emptyAnswers();
+  areas.forEach(function(ta){ newAns[Number(ta.getAttribute("data-i"))] = (ta.value||"").trim() || null; });
+  var patch={};
+  patch["questions."+period+".qIds"] = qIds;
+  patch["questions."+period+".answers."+ROLE] = newAns;
+  patch["questions."+period+".at."+ROLE] = Date.now();
+  return updateDoc(docRef, patch).then(function(){
+    if(hasAny(newAns)) pingPartner("respondió las preguntas 💬", "questions");
+  }).catch(function(e){
+    console.error(e);
+    if(!silent) alert("No se pudo guardar tu respuesta. Revisa tu conexión e intenta de nuevo.");
+    throw e;
+  });
+}
+function renderQuestions(){
+  var list=document.getElementById("questionsList");
+  var active=document.activeElement;
+  // Si ya estás escribiendo una respuesta, no reconstruimos la lista completa
+  // (para no borrar lo que estás escribiendo); solo refrescamos la columna de
+  // tu pareja.
+  var typingHere = active && list.contains(active) && active.classList.contains("qAnswer");
+
+  var period=periodKey();
+  document.getElementById("qDateLabel").textContent = "Preguntas de este bloque · "+periodRemainingLabel();
+  var dayDataRaw = STATE.questions && STATE.questions[period];
+  var qIds = qIdsOfBlock(period, dayDataRaw);
+  document.getElementById("qHeading").textContent = QUESTIONS_PER_PERIOD+" para conocerse más";
+  var dayData = dayDataRaw || {answers:{a:emptyAnswers(), b:emptyAnswers()}};
+  var myAns = (dayData.answers && dayData.answers[ROLE]) || emptyAnswers();
+  var theirAns = (dayData.answers && dayData.answers[otherRole(ROLE)]) || emptyAnswers();
+  var theirMap = answersByQid(otherRole(ROLE));
+  var pName = partnerName() || "tu pareja";
+
+  renderQuestionsHistory(period);
+
+  if(typingHere){
+    qIds.forEach(function(qid, i){
+      var item = list.querySelector('.q-item[data-qi="'+i+'"]');
+      if(!item) return;
+      var rightCol = item.querySelector(".ans-col:last-child");
+      if(!rightCol) return;
+      rightCol.innerHTML = '<label>'+esc(pName)+'</label>'+partnerCellHtml(pName, theirAns[i], qid, period, theirMap);
+    });
+    return;
+  }
+
+  list.innerHTML = qIds.map(function(qid, i){
+    var mine = myAns[i]||"";
+    return '<div class="q-item" data-qi="'+i+'">'+
+      '<div class="q-text">'+(i+1)+'. '+esc(QUESTIONS[qid])+'</div>'+
+      '<div class="ans-cols">'+
+        '<div class="ans-col"><label>Tú</label><textarea rows="2" data-i="'+i+'" class="qAnswer">'+esc(mine)+'</textarea></div>'+
+        '<div class="ans-col"><label>'+esc(pName)+'</label>'+partnerCellHtml(pName, theirAns[i], qid, period, theirMap)+'</div>'+
+      '</div></div>';
+  }).join("") + '<button class="btn block" id="saveAnswersBtn" style="margin-top:14px;">Guardar mis respuestas</button>'+
+    '<p class="notif-status" id="qAutoSaveNote">Se guarda solo mientras escribes.</p>';
+
+  // Guardado automático: 1.5 s después de dejar de escribir.
+  Array.from(list.querySelectorAll(".qAnswer")).forEach(function(ta){
+    ta.addEventListener("input", function(){
+      if(qAutoSaveTimer) clearTimeout(qAutoSaveTimer);
+      var note=document.getElementById("qAutoSaveNote");
+      if(note) note.textContent="Escribiendo…";
+      qAutoSaveTimer = setTimeout(function(){
+        saveMyAnswers(period, qIds, true).then(function(){
+          var n=document.getElementById("qAutoSaveNote"); if(n) n.textContent="Guardado ✓";
+        }).catch(function(){
+          var n=document.getElementById("qAutoSaveNote"); if(n) n.textContent="No se pudo guardar, revisa tu internet.";
+        });
+      }, 1500);
+    });
+  });
+
+  document.getElementById("saveAnswersBtn").onclick=function(){
+    if(qAutoSaveTimer){ clearTimeout(qAutoSaveTimer); qAutoSaveTimer=null; }
+    var btn=document.getElementById("saveAnswersBtn");
+    saveMyAnswers(period, qIds, false).then(function(){
+      if(!btn) return;
+      btn.textContent="¡Guardado! 💾"; setTimeout(function(){ btn.textContent="Guardar mis respuestas"; },1500);
+    }).catch(function(){});
+  };
+}
+function renderQuestionsHistory(currentPeriod){
+  var el=document.getElementById("questionsHistory");
+  if(!el || !STATE) return;
+  var qs = STATE.questions || {};
+  var me=ROLE, other=otherRole(ROLE);
+  var pName = partnerName() || "Tu pareja";
+  var keys = Object.keys(qs).filter(function(k){
+    if(k===currentPeriod) return false;
+    var b=qs[k]||{}, a=b.answers||{};
+    return hasAny(a[me]) || hasAny(a[other]);
+  }).sort(function(x,y){ return blockTime(y,qs[y]) - blockTime(x,qs[x]); }).slice(0,10);
+  if(!keys.length){ el.hidden=true; el.innerHTML=""; return; }
+  el.hidden=false;
+  el.innerHTML = '<h3>🗂️ Respuestas anteriores</h3><p class="muted">Lo que han contestado en bloques pasados, para que nada se pierda.</p>' +
+    keys.map(function(key){
+      var b=qs[key]||{}, a=b.answers||{};
+      var ids=qIdsOfBlock(key,b);
+      var mineArr=a[me]||[], theirArr=a[other]||[];
+      var t=blockTime(key,b);
+      var when = t ? new Date(t).toLocaleString("es-MX",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : key;
+      var n=Math.max(mineArr.length, theirArr.length);
+      var rows="";
+      for(var i=0;i<n;i++){
+        var m=mineArr[i], th=theirArr[i];
+        if(!m && !th) continue;
+        var qText = ids[i]!=null && QUESTIONS[ids[i]] ? QUESTIONS[ids[i]] : "Pregunta "+(i+1);
+        rows += '<div class="qh-q">'+esc(qText)+'</div>'+
+          '<div class="qh-a"><b>Tú:</b> '+(m?esc(m):'<span class="muted">sin responder</span>')+'</div>'+
+          '<div class="qh-a"><b style="color:'+roleColor(other)+'">'+esc(pName)+':</b> '+(th?esc(th):'<span class="muted">sin responder</span>')+'</div>';
+      }
+      return '<div class="qh-block"><div class="qh-when">'+esc(when)+'</div>'+rows+'</div>';
+    }).join("");
+}
+setInterval(function(){
+  var lbl=document.getElementById("qDateLabel");
+  if(lbl && STATE) lbl.textContent = "Preguntas de este bloque · "+periodRemainingLabel();
+}, 30000);
+
+/* ---------------- this or that ---------------- */
+function renderThisOrThat(){
+  var el=document.getElementById("totList");
+  var today=todayStr();
+  var pairIds = pairIdsFor(today);
+  var dayData = (STATE.thisOrThat && STATE.thisOrThat[today]) || {picks:{a:[],b:[]}};
+  var myPicks = (dayData.picks && dayData.picks[ROLE]) || [];
+  var theirPicks = (dayData.picks && dayData.picks[otherRole(ROLE)]) || [];
+
+  el.innerHTML = pairIds.map(function(pid, i){
+    var pair=THIS_OR_THAT[pid];
+    var mine=myPicks[i], theirs=theirPicks[i];
+    function optHtml(sideIdx, label, em){
+      var cls="tot-opt";
+      if(mine===sideIdx) cls+=" picked";
+      var style="", badge="";
+      if(theirs===sideIdx){
+        var col = roleColor(otherRole(ROLE));
+        style=' style="box-shadow:0 0 0 3px '+col+', var(--shadow);"';
+        badge='<span class="tot-their-badge" style="background:'+col+';">'+esc(initials(partnerName()))+'</span>';
+      }
+      return '<div class="'+cls+'" data-i="'+i+'" data-side="'+sideIdx+'"'+style+'>'+badge+'<span class="em">'+em+'</span>'+esc(label)+'</div>';
+    }
+    return '<div class="tot-pair">'+optHtml(0,pair[0],pair[1])+optHtml(1,pair[2],pair[3])+'</div>';
+  }).join("");
+
+  Array.from(el.querySelectorAll(".tot-opt")).forEach(function(node){
+    node.onclick=function(){
+      var i=Number(node.getAttribute("data-i")), side=Number(node.getAttribute("data-side"));
+      var newPicks = myPicks.slice();
+      while(newPicks.length<pairIds.length) newPicks.push(null);
+      newPicks[i]=side;
+      var patch={};
+      patch["thisOrThat."+today+".pairIds"] = pairIds;
+      patch["thisOrThat."+today+".picks."+ROLE] = newPicks;
+      if(docRef) updateDoc(docRef, patch).catch(function(){});
+      pingPartner("está jugando Esto o aquello 🎲", "tot");
+    };
+  });
+
+  var matchEl=document.getElementById("totMatch");
+  var answeredBoth=0, matched=0;
+  for(var i2=0;i2<pairIds.length;i2++){
+    if(myPicks[i2]!=null && theirPicks[i2]!=null){ answeredBoth++; if(myPicks[i2]===theirPicks[i2]) matched++; }
+  }
+  if(answeredBoth>0){
+    matchEl.hidden=false;
+    matchEl.textContent = "💘 combinan "+Math.round(matched/answeredBoth*100)+"% ("+matched+"/"+answeredBoth+")";
+  } else {
+    matchEl.hidden=true;
+  }
+}
+
+/* ---------------- wheel ---------------- */
+var wheelSpinning=false;
+document.getElementById("spinBtn").addEventListener("click", function(){
+  if(wheelSpinning) return;
+  wheelSpinning=true;
+  var face=document.getElementById("wheelFace");
+  var idea = generateWheelIdea();
+  var extraTurns = 4 + Math.floor(Math.random()*3);
+  var finalDeg = extraTurns*360 + Math.floor(Math.random()*360);
+  face.style.transform = "rotate("+finalDeg+"deg)";
+  document.getElementById("wheelResult").textContent="Girando…";
+  setTimeout(function(){
+    document.getElementById("wheelResult").textContent = "🎉 "+idea;
+    wheelSpinning=false;
+    addDoc(collection(db,"wheelHistory"), {idea:idea, by:ROLE, ts:Date.now()}).catch(function(){});
+  }, 3200);
+});
+function renderWheelHistory(){
+  var el=document.getElementById("wheelHistory");
+  if(!WHEEL_HIST.length){ el.innerHTML=""; return; }
+  el.innerHTML = '<h3 style="margin-top:4px;">Planes anteriores</h3>' + WHEEL_HIST.slice(0,6).map(function(h){
+    var who = (STATE.names[h.by]) || "";
+    return '<div class="history-item"><b style="color:'+roleColor(h.by)+'">'+esc(who)+'</b><span>'+esc(h.idea)+'</span>'+
+      '<button class="bucket-del" data-id="'+h.id+'">✕</button></div>';
+  }).join("");
+  Array.from(el.querySelectorAll(".bucket-del")).forEach(function(btn){
+    btn.onclick=function(){ delFromCollection("wheelHistory", btn.getAttribute("data-id")); };
+  });
+}
+
+/* ---------------- verdad o reto ---------------- */
+var TD_HIST=[];
+var TD_CAT_KEY="sn_tdcat_v1";
+var tdCat = (function(){ try{ return localStorage.getItem(TD_CAT_KEY) || "divertido"; }catch(e){ return "divertido"; } })();
+function renderTDCats(){
+  var el=document.getElementById("tdCats");
+  if(!el) return;
+  el.innerHTML = TD_CATS.map(function(c){
+    return '<div class="td-cat'+(c.id===tdCat?" active":"")+'" data-cat="'+c.id+'">'+esc(c.label)+'</div>';
+  }).join("");
+  Array.from(el.querySelectorAll(".td-cat")).forEach(function(node){
+    node.onclick=function(){
+      tdCat = node.getAttribute("data-cat");
+      try{ localStorage.setItem(TD_CAT_KEY, tdCat); }catch(e){}
+      renderTDCats();
+      toastMsg("Categoría: "+(TD_CATS.find(function(c){return c.id===tdCat;})||{}).label);
+    };
+  });
+}
+renderTDCats();
+document.getElementById("drawTruthBtn").addEventListener("click", function(){ drawCard("verdad"); });
+document.getElementById("drawDareBtn").addEventListener("click", function(){ drawCard("reto"); });
+function drawCard(kind){
+  if(!ROLE){ toastMsg("Entra con tu nombre primero 💗"); return; }
+  var group = TD_BANK[tdCat] || TD_BANK.divertido;
+  var bank = kind==="verdad" ? group.truths : group.dares;
+  var text = bank[Math.floor(Math.random()*bank.length)];
+  var box=document.getElementById("drawnCardBox");
+  var txt=document.getElementById("drawnCardText");
+  box.hidden=false;
+  txt.textContent = (kind==="verdad" ? "💬 " : "🔥 ") + text;
+  addDoc(collection(db,"tdHistory"), {kind:kind, text:text, cat:tdCat, by:ROLE, ts:Date.now()}).catch(function(){});
+}
+function renderTDHistory(){
+  var el=document.getElementById("tdHistory");
+  if(!el || !STATE) return;
+  if(!TD_HIST.length){ el.innerHTML='<p class="muted">Todavía no han sacado ninguna carta.</p>'; return; }
+  el.innerHTML = TD_HIST.slice(0,10).map(function(h){
+    var who=(STATE.names[h.by])||"";
+    var catInfo = TD_CATS.find(function(c){ return c.id===h.cat; });
+    var catTag = catInfo ? ' <span style="font-size:11px;color:var(--ink-soft);">('+esc(catInfo.label)+')</span>' : "";
+    return '<div class="history-item"><b style="color:'+roleColor(h.by)+'">'+esc(who)+'</b><span>'+(h.kind==="verdad"?"💬 ":"🔥 ")+esc(h.text)+catTag+'</span>'+
+      '<button class="bucket-del" data-id="'+h.id+'">✕</button></div>';
+  }).join("");
+  Array.from(el.querySelectorAll(".bucket-del")).forEach(function(btn){
+    btn.onclick=function(){ delFromCollection("tdHistory", btn.getAttribute("data-id")); };
+  });
+}
+
+/* ---------------- memorama por turnos (Realtime Database) ---------------- */
+function memoEmptyBoard(){
+  var pairs = MEMO_EMOJIS.concat(MEMO_EMOJIS);
+  for(var i=pairs.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var tmp=pairs[i]; pairs[i]=pairs[j]; pairs[j]=tmp;
+  }
+  return { cards: pairs.map(function(em){ return {em:em, matched:false}; }), open:[], turn:"a", moves:0, matches:0, ts:Date.now() };
+}
+var memoState=null;
+function renderMemo(){
+  var grid=document.getElementById("memoGrid");
+  var status=document.getElementById("memoStatus");
+  if(!grid || !status) return;
+  var st = memoState || memoEmptyBoard();
+  var pName = partnerName() || "tu pareja";
+  if(!ROLE){ status.textContent="Entra primero para jugar"; grid.innerHTML=""; return; }
+  var done = st.matches>=MEMO_EMOJIS.length;
+  if(done){ status.textContent="¡Completado en "+st.moves+" movimientos! 🎉"; }
+  else { status.textContent = (st.turn===ROLE ? "Tu turno" : "Turno de "+esc(pName)) + " · movimientos: "+st.moves+" · si no encuentras pareja, le toca al otro"; }
+  var openArr = st.open || [];
+  grid.innerHTML = st.cards.map(function(c,i){
+    var isOpen = openArr.indexOf(i)>=0;
+    var show = c.matched || isOpen;
+    var cls = "memo-cell"+(isOpen?" open":"")+(c.matched?" matched":"");
+    return '<div class="'+cls+'" data-i="'+i+'">'+(show?c.em:"")+'</div>';
+  }).join("");
+  Array.from(grid.querySelectorAll(".memo-cell")).forEach(function(el){
+    el.onclick=function(){ memoFlip(Number(el.getAttribute("data-i"))); };
+  });
+}
+function memoFlip(i){
+  if(!ROLE){ toastMsg("Entra con tu nombre primero 💗"); return; }
+  if(!rtdb){ toastMsg("Sin conexión, intenta de nuevo"); return; }
+  var st = memoState || memoEmptyBoard();
+  if(st.matches>=MEMO_EMOJIS.length){ toastMsg("Ya se completó, dale a reiniciar 🔄"); return; }
+  if(st.turn!==ROLE){ toastMsg("Espera tu turno… 👀"); return; }
+  var openArr = (st.open || []).slice();
+  var c = st.cards[i];
+  if(!c || c.matched || openArr.indexOf(i)>=0) return;
+  if(openArr.length>=2) return;
+  var next = JSON.parse(JSON.stringify(st));
+  next.open = openArr.concat([i]);
+  next.ts = Date.now();
+  if(next.open.length===2){
+    var a=next.cards[next.open[0]], b=next.cards[next.open[1]];
+    next.moves = (next.moves||0)+1;
+    if(a.em===b.em){
+      a.matched=true; b.matched=true; next.matches=(next.matches||0)+1;
+      next.open=[];
+      rset(rref(rtdb,"game/memorama"), next).catch(function(e){ console.error(e); alert("No se pudo jugar, revisa tu conexión."); });
+    } else {
+      rset(rref(rtdb,"game/memorama"), next).catch(function(e){ console.error(e); });
+      setTimeout(function(){
+        var resolved = JSON.parse(JSON.stringify(next));
+        resolved.open = [];
+        resolved.turn = otherRole(next.turn);
+        rset(rref(rtdb,"game/memorama"), resolved).catch(function(e){ console.error(e); });
+      }, 900);
+    }
+  } else {
+    rset(rref(rtdb,"game/memorama"), next).catch(function(e){ console.error(e); alert("No se pudo jugar, revisa tu conexión."); });
+  }
+}
+var memoResetBtnEl=document.getElementById("memoResetBtn");
+if(memoResetBtnEl) memoResetBtnEl.addEventListener("click", function(){
+  if(!rtdb) return;
+  rset(rref(rtdb,"game/memorama"), memoEmptyBoard()).catch(function(){});
+});
+function watchMemo(){
+  if(!rtdb) return;
+  onValue(rref(rtdb,"game/memorama"), function(snap){
+    var v=snap.val();
+    if(!v){
+      memoState=memoEmptyBoard();
+      if(ROLE==="a"){ rset(rref(rtdb,"game/memorama"), memoState).catch(function(){}); }
+    } else {
+      memoState=v;
+    }
+    renderMemo();
+  });
+}
+
+/* ---------------- lista de planes pendientes ---------------- */
+var BUCKET=[];
+document.getElementById("addBucketBtn").addEventListener("click", addBucketItem);
+document.getElementById("bucketInput").addEventListener("keydown", function(e){
+  if(e.key==="Enter") addBucketItem();
+});
+function addBucketItem(){
+  var input=document.getElementById("bucketInput");
+  var text=(input.value||"").trim();
+  if(!text || !ROLE) return;
+  addDoc(collection(db,"bucketList"), {text:text, done:false, by:ROLE, ts:Date.now()})
+    .then(function(){ input.value=""; pingPartner("agregó un plan a su lista ✅"); }).catch(function(){});
+}
+function renderBucket(){
+  var el=document.getElementById("bucketList");
+  if(!el) return;
+  if(!BUCKET.length){ el.innerHTML='<p class="muted">Todavía no hay planes en la lista. ¡Agreguen el primero!</p>'; return; }
+  el.innerHTML = BUCKET.map(function(b){
+    return '<div class="bucket-item" data-id="'+b.id+'">'+
+      '<span class="bucket-check'+(b.done?" done":"")+'" data-act="toggle">'+(b.done?"✓":"")+'</span>'+
+      '<span class="bucket-text'+(b.done?" done":"")+'">'+esc(b.text)+'</span>'+
+      '<button class="bucket-del" data-act="del">✕</button>'+
+    '</div>';
+  }).join("");
+  Array.from(el.querySelectorAll(".bucket-item")).forEach(function(row){
+    var id=row.getAttribute("data-id");
+    row.querySelector('[data-act="toggle"]').onclick=function(){
+      var item=BUCKET.find(function(b){ return b.id===id; });
+      if(item) updateDoc(doc(db,"bucketList",id), {done: !item.done}).catch(function(){});
+    };
+    row.querySelector('[data-act="del"]').onclick=function(){
+      deleteDoc(doc(db,"bucketList",id)).catch(function(){});
+    };
+  });
+}
+
+/* ---------------- gato en vivo (Realtime Database) ---------------- */
+var TTT_WINS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+var tttState=null, tttWinLine=null;
+// Nota: las celdas vacías usan "" (no null). Firebase Realtime Database
+// borra cualquier valor null dentro de un array al guardarlo, así que un
+// tablero recién creado con 9 nulls se guardaba como "sin cells" y rompía
+// el juego por completo (la causa real de "el gato no hace nada").
+function tttEmptyBoard(){ return {cells:new Array(9).fill(""), turn:"a", winner:null, ts:Date.now()}; }
+function tttCheckWinner(cells){
+  if(!Array.isArray(cells)) return null;
+  for(var i=0;i<TTT_WINS.length;i++){
+    var w=TTT_WINS[i];
+    if(cells[w[0]] && cells[w[0]]===cells[w[1]] && cells[w[1]]===cells[w[2]]) return {winner:cells[w[0]], line:w};
+  }
+  if(cells.every(function(c){ return c!==""; })) return {winner:"draw", line:null};
+  return null;
+}
+function renderTTT(){
+  var grid=document.getElementById("tttGrid");
+  var status=document.getElementById("tttStatus");
+  if(!grid || !status) return;
+  var st = (tttState && Array.isArray(tttState.cells)) ? tttState : tttEmptyBoard();
+  var pName = partnerName() || "tu pareja";
+  if(!ROLE){ status.textContent="Entra primero para jugar"; grid.innerHTML=""; return; }
+  if(st.winner==="draw"){ status.textContent="¡Empate! 🤝"; }
+  else if(st.winner){ status.textContent = (st.winner===ROLE ? "¡Ganaste! 🎉" : esc(pName)+" ganó esta vez, ¡otra va! 💞"); }
+  else { status.textContent = st.turn===ROLE ? "Tu turno · tú eres "+(ROLE==="a"?"❌":"⭕") : "Turno de "+esc(pName); }
+  var scoreEl=document.getElementById("tttScore");
+  if(scoreEl && STATE){
+    var wins = STATE.tttWins || {a:0,b:0};
+    scoreEl.textContent = "Marcador: Tú "+(wins[ROLE]||0)+" – "+(wins[otherRole(ROLE)]||0)+" "+pName;
+  }
+  grid.innerHTML = st.cells.map(function(c,i){
+    var mark = c==="a" ? "❌" : c==="b" ? "⭕" : "";
+    var isWin = tttWinLine && tttWinLine.indexOf(i)>=0;
+    var disabled = !!c || !!st.winner || st.turn!==ROLE;
+    return '<div class="ttt-cell'+(disabled?" disabled":"")+(isWin?" win":"")+'" data-i="'+i+'" style="color:'+(c?roleColor(c):"inherit")+'">'+mark+'</div>';
+  }).join("");
+  Array.from(grid.querySelectorAll(".ttt-cell")).forEach(function(el){
+    el.onclick=function(){ tttPlay(Number(el.getAttribute("data-i"))); };
+  });
+}
+function tttPlay(i){
+  if(!ROLE){ toastMsg("Entra con tu nombre primero 💗"); return; }
+  if(!rtdb){ toastMsg("Sin conexión, intenta de nuevo"); return; }
+  var st = (tttState && Array.isArray(tttState.cells)) ? tttState : tttEmptyBoard();
+  if(st.winner){ toastMsg("Esta partida ya acabó, dale a reiniciar 🔄"); return; }
+  if(st.cells[i]){ toastMsg("Ese lugar ya está ocupado"); return; }
+  if(st.turn!==ROLE){ toastMsg("Espera tu turno… 👀"); return; }
+  var cells = st.cells.slice(); cells[i]=ROLE;
+  var res = tttCheckWinner(cells);
+  var next = {cells:cells, turn:otherRole(ROLE), winner: res?res.winner:null, ts:Date.now()};
+  rset(rref(rtdb,"game/tictactoe"), next).catch(function(e){ console.error(e); alert("No se pudo jugar, revisa tu conexión e intenta otra vez."); });
+  if(res && res.winner && res.winner!=="draw" && docRef){
+    var patch={}; patch["tttWins."+res.winner]=increment(1);
+    updateDoc(docRef, patch).catch(function(){});
+  }
+}
+var tttResetBtnEl=document.getElementById("tttResetBtn");
+if(tttResetBtnEl) tttResetBtnEl.addEventListener("click", function(){
+  if(!rtdb) return;
+  rset(rref(rtdb,"game/tictactoe"), tttEmptyBoard()).catch(function(){});
+});
+function watchTTT(){
+  if(!rtdb) return;
+  onValue(rref(rtdb,"game/tictactoe"), function(snap){
+    var v=snap.val();
+    if(!v || !Array.isArray(v.cells)){
+      // Autocorrección: si el tablero llegó dañado (por ejemplo, de una
+      // versión vieja que guardaba celdas vacías como null), lo reinicia.
+      tttState=tttEmptyBoard();
+      if(ROLE==="a"){ rset(rref(rtdb,"game/tictactoe"), tttState).catch(function(){}); }
+    } else {
+      tttState=v;
+    }
+    var res = tttState.winner ? tttCheckWinner(tttState.cells) : null;
+    tttWinLine = res && res.line ? res.line : null;
+    renderTTT();
+  });
+}
+
+/* ---------------- live typing (Realtime Database) ---------------- */
+var liveInput=document.getElementById("liveInput");
+liveInput.addEventListener("input", function(){ sendPresence(); });
+document.getElementById("heartBtn").addEventListener("click", function(){
+  spawnHeart(window.innerWidth-60, window.innerHeight-140);
+  sendHeart();
+});
+function spawnHeart(x,y){
+  var h=document.createElement("div");
+  h.className="flying-heart"; h.textContent="❤️";
+  h.style.left=x+"px"; h.style.top=y+"px";
+  document.body.appendChild(h);
+  setTimeout(function(){ h.remove(); }, 1700);
+}
+function sendPresence(){
+  if(!ROLE || !rtdb) return;
+  rset(rref(rtdb, "presence/"+ROLE), {
+    name: myName() || "",
+    typing: liveInput.value.slice(0,240),
+    device: DEVICE_ID,
+    updatedAt: Date.now()
+  }).catch(function(){});
+}
+function sendHeart(){
+  if(!ROLE || !rtdb) return;
+  rset(rref(rtdb, "signals/heart"), {by:ROLE, ts:Date.now(), nonce: Math.random()}).catch(function(){});
+  if(docRef) updateDoc(docRef, {heartsSent: increment(1)}).catch(function(){});
+  pingPartner("te mandó un corazón ❤️", "heart");
+}
+function startPresence(){
+  if(!ROLE || !rtdb) return;
+  var myRef = rref(rtdb, "presence/"+ROLE);
+  onDisconnect(myRef).remove();
+  sendPresence();
+  setInterval(sendPresence, 5000);
+}
+function watchRealtime(){
+  if(!rtdb) return;
+  onValue(rref(rtdb, ".info/connected"), function(snap){
+    roomConnected = snap.val()===true;
+    renderTop();
+  });
+  onValue(rref(rtdb, "presence"), function(snap){
+    var val = snap.val() || {};
+    var partnerData = ROLE ? val[otherRole(ROLE)] : null;
+    var wasOnline = peerOnline;
+    peerOnline = !!partnerData;
+    onPresenceChange(val, partnerData, wasOnline);
+    var bubble=document.getElementById("partnerBubble");
+    var title=document.getElementById("partnerLiveTitle");
+    var pName = partnerName() || "Tu pareja";
+    if(partnerData && partnerData.typing){
+      title.textContent = pName+" está escribiendo…";
+      bubble.innerHTML = esc(partnerData.typing)+'<span class="caret"></span>';
+    } else if(partnerData){
+      title.textContent = pName+" está aquí";
+      bubble.innerHTML = '<span class="muted">Nada por ahora</span>';
+    } else {
+      title.textContent = pName+" no está conectado ahora mismo";
+      bubble.innerHTML = '<span class="muted">Cuando '+esc(pName)+' abra esta página, verás lo que escribe aquí.</span>';
+    }
+    renderTop();
+  });
+  onValue(rref(rtdb, "signals/heart"), function(snap){
+    var v = snap.val();
+    if(!v) return;
+    if(!heartInit){ heartInit=true; lastHeartNonce=v.nonce; return; }
+    if(v.nonce!==lastHeartNonce){
+      lastHeartNonce=v.nonce;
+      if(v.by!==ROLE){
+        spawnHeart(20+Math.random()*(window.innerWidth-80), window.innerHeight-160);
+        if(document.hidden) partnerActivity("te mandó un corazón ❤️", null, "heart");
+      }
+    }
+  });
+}
+
+/* ---------------- videollamada (Jitsi Meet, sin backend propio) ---------------- */
+document.getElementById("videoCallBtn").addEventListener("click", function(){
+  var slug = (firebaseConfig.projectId||"solo-nosotros").replace(/[^a-zA-Z0-9]/g,"");
+  var room = "SoloNosotros-"+slug;
+  window.open("https://meet.jit.si/"+room, "_blank");
+  toastMsg("Abriendo videollamada… manda el mismo botón a tu pareja 💞");
+});
+
+/* ---------------- notas de voz (MediaRecorder + Firestore) ---------------- */
+var VOICE_MAX_MS = 20000;
+var VOICE_MAX_BYTES = 900000;
+var VOICE_NOTES = [];
+var voiceRecorder=null, voiceChunks=[], voiceRecording=false, voiceStopTimer=null, voiceStartTs=0;
+var recordBtnEl = document.getElementById("recordBtn");
+var recordStatusEl = document.getElementById("recordStatus");
+if(!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+  if(recordBtnEl){ recordBtnEl.disabled=true; recordBtnEl.textContent="🎤 No disponible en este navegador"; }
+} else if(recordBtnEl){
+  recordBtnEl.addEventListener("click", function(){
+    if(!ROLE){ toastMsg("Entra con tu nombre primero 💗"); return; }
+    if(voiceRecording) stopVoiceRecording(); else startVoiceRecording();
+  });
+}
+function startVoiceRecording(){
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    voiceChunks=[];
+    try{ voiceRecorder = new MediaRecorder(stream); }
+    catch(e){ toastMsg("No se pudo iniciar la grabación"); return; }
+    voiceRecorder.ondataavailable = function(e){ if(e.data && e.data.size>0) voiceChunks.push(e.data); };
+    voiceRecorder.onstop = function(){
+      stream.getTracks().forEach(function(t){ t.stop(); });
+      finishVoiceRecording();
+    };
+    voiceRecorder.start();
+    voiceRecording=true; voiceStartTs=Date.now();
+    recordBtnEl.classList.add("recording");
+    recordBtnEl.textContent="⏹️ Detener (máx 20s)";
+    tickVoiceStatus();
+    voiceStopTimer = setTimeout(function(){ if(voiceRecording) stopVoiceRecording(); }, VOICE_MAX_MS);
+  }).catch(function(){
+    toastMsg("No pudimos acceder al micrófono. Revisa los permisos.");
+  });
+}
+function tickVoiceStatus(){
+  if(!voiceRecording) return;
+  var secs = Math.max(0, Math.round((VOICE_MAX_MS-(Date.now()-voiceStartTs))/1000));
+  recordStatusEl.textContent = "🔴 Grabando… se corta en "+secs+"s";
+  setTimeout(function(){ if(voiceRecording) tickVoiceStatus(); }, 500);
+}
+function stopVoiceRecording(){
+  if(!voiceRecording || !voiceRecorder) return;
+  voiceRecording=false;
+  if(voiceStopTimer){ clearTimeout(voiceStopTimer); voiceStopTimer=null; }
+  recordBtnEl.classList.remove("recording");
+  recordBtnEl.textContent="🎤 Grabar audio";
+  recordStatusEl.textContent="Procesando…";
+  try{ voiceRecorder.stop(); }catch(e){}
+}
+function finishVoiceRecording(){
+  var durationMs = Date.now()-voiceStartTs;
+  var blob = new Blob(voiceChunks, {type: voiceChunks[0] ? voiceChunks[0].type : "audio/webm"});
+  if(blob.size===0){ recordStatusEl.textContent="No se grabó nada, intenta de nuevo."; return; }
+  if(blob.size > VOICE_MAX_BYTES){
+    recordStatusEl.textContent="El audio salió muy pesado, intenta uno más corto.";
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(){
+    addDoc(collection(db,"voiceNotes"), {audio:reader.result, by:ROLE, ts:Date.now(), durationMs:durationMs})
+      .then(function(){ pingPartner("te mandó una nota de voz 🎤"); recordStatusEl.textContent="¡Enviado! 💌"; setTimeout(function(){ recordStatusEl.textContent=""; }, 2500); })
+      .catch(function(){ recordStatusEl.textContent="No se pudo enviar, intenta de nuevo."; });
+  };
+  reader.onerror = function(){ recordStatusEl.textContent="No se pudo procesar el audio."; };
+  reader.readAsDataURL(blob);
+}
+function renderVoiceNotes(){
+  var el=document.getElementById("voiceList");
+  if(!el || !STATE) return;
+  if(!VOICE_NOTES.length){ el.innerHTML='<p class="muted">Todavía no hay notas de voz.</p>'; return; }
+  el.innerHTML = VOICE_NOTES.map(function(v){
+    var who=(STATE.names[v.by])||"";
+    var secs = v.durationMs ? Math.round(v.durationMs/1000)+"s" : "";
+    return '<div class="voice-item" style="position:relative;padding-right:30px;"><span class="voice-who" style="color:'+roleColor(v.by)+'">'+esc(who)+'</span>'+
+      '<audio controls src="'+v.audio+'"></audio>'+
+      '<span class="voice-meta">'+secs+'</span>'+
+      '<button class="bucket-del" data-id="'+v.id+'" style="position:absolute;top:8px;right:0;">✕</button></div>';
+  }).join("");
+  Array.from(el.querySelectorAll(".bucket-del")).forEach(function(btn){
+    btn.onclick=function(){ delFromCollection("voiceNotes", btn.getAttribute("data-id")); };
+  });
+}
+
+/* ---------------- cápsula del tiempo ---------------- */
+var CAPSULES = [];
+var addCapsuleBtnEl = document.getElementById("addCapsuleBtn");
+if(addCapsuleBtnEl) addCapsuleBtnEl.addEventListener("click", function(){
+  var textEl=document.getElementById("capsuleInput");
+  var dateEl=document.getElementById("capsuleDateInput");
+  var text=(textEl.value||"").trim();
+  var dateVal=dateEl.value;
+  if(!text || !dateVal || !ROLE) return;
+  var revealAt = new Date(dateVal+"T00:00:00").getTime();
+  if(!revealAt || isNaN(revealAt)) return;
+  addDoc(collection(db,"timeCapsules"), {text:text, by:ROLE, ts:Date.now(), revealAt:revealAt})
+    .then(function(){ textEl.value=""; dateEl.value=""; toastMsg("🔒 Cápsula guardada"); pingPartner("guardó una cápsula del tiempo 🔒"); })
+    .catch(function(){ alert("No se pudo guardar, intenta de nuevo."); });
+});
+function renderCapsules(){
+  var el=document.getElementById("capsuleList");
+  if(!el || !STATE) return;
+  if(!CAPSULES.length){ el.innerHTML='<p class="muted" style="margin-top:8px;">Todavía no hay cápsulas guardadas.</p>'; return; }
+  var now = Date.now();
+  el.innerHTML = CAPSULES.map(function(c){
+    var who=(STATE.names[c.by])||"";
+    var when = new Date(c.revealAt).toLocaleDateString("es-MX",{day:"numeric",month:"short",year:"numeric"});
+    var locked = c.revealAt > now;
+    var body = locked
+      ? '<span class="capsule-locked">🔒 Se abre el '+when+'</span>'
+      : esc(c.text);
+    return '<div class="capsule-item" style="position:relative;padding-right:30px;">'+
+      '<b style="color:'+roleColor(c.by)+'">'+esc(who)+'</b>: '+body+
+      '<div class="meta">'+(locked?"Cerrada hasta "+when:"Abierta desde "+when)+'</div>'+
+      '<button class="bucket-del" data-id="'+c.id+'" style="position:absolute;top:8px;right:4px;">✕</button></div>';
+  }).join("");
+  Array.from(el.querySelectorAll(".bucket-del")).forEach(function(btn){
+    btn.onclick=function(){ delFromCollection("timeCapsules", btn.getAttribute("data-id")); };
+  });
+}
+
+/* ---------------- avisos / notificaciones ---------------- */
+// Hay dos niveles:
+//  1) Con la app abierta (o recién minimizada): aviso dentro de la app +
+//     notificación del sistema si le diste permiso.
+//  2) Con la app cerrada: se manda un aviso por ntfy.sh (gratis, sin tarjeta)
+//     a la app "ntfy" del celular de tu pareja, si la activó.
+var BOOT_TS = Date.now();
+var LAST_SEEN_KEY = "sn_last_seen_v1";
+var BOOT_LAST_SEEN = null;
+try{ BOOT_LAST_SEEN = Number(localStorage.getItem(LAST_SEEN_KEY)) || null; }catch(e){}
+function markSeen(){ try{ localStorage.setItem(LAST_SEEN_KEY, String(Date.now())); }catch(e){} }
+setInterval(function(){ if(!document.hidden) markSeen(); }, 15000);
+document.addEventListener("visibilitychange", function(){
+  if(document.hidden) markSeen();
+  else { markSeen(); checkForUpdate(); }
+});
+
+var swReg = null;
+if("serviceWorker" in navigator && /^https?:/.test(location.protocol)){
+  navigator.serviceWorker.register("sw.js").then(function(r){ swReg=r; }).catch(function(){});
+  navigator.serviceWorker.addEventListener("message", function(e){
+    if(e.data && e.data.tab) showTab(e.data.tab);
+  });
+}
+function notifAllowed(){ return ("Notification" in window) && Notification.permission==="granted"; }
+function systemNotify(text, tab){
+  if(!notifAllowed()) return;
+  var opts = {body:text, icon:"icons/icon-192.png", badge:"icons/icon-192.png",
+              tag:"sn-"+(tab||"general"), renotify:true, data:{tab:tab||"inicio"}};
+  if(swReg && swReg.showNotification){
+    swReg.showNotification("Solo Nosotros", opts).catch(function(){});
+  } else {
+    try{ new Notification("Solo Nosotros", opts); }catch(e){}
+  }
+}
+function markTabDot(tab){
+  if(!tab) return;
+  var btn=document.querySelector('nav.tabbar button[data-tab="'+tab+'"]');
+  if(btn && !btn.classList.contains("active")) btn.classList.add("has-new");
+}
+// Algo nuevo que hizo tu pareja.
+function partnerActivity(text, tab, kind){
+  if(!ROLE) return;
+  var full = (partnerName() || "Tu pareja")+" "+text;
+  markTabDot(tab);
+  if(document.hidden || !document.hasFocus()){
+    systemNotify(full, tab);
+  } else {
+    toastMsg(full);
+    try{ if(navigator.vibrate) navigator.vibrate(60); }catch(e){}
+  }
+}
+
+// Colecciones: avisa cuando tu pareja agrega algo nuevo.
+var WATCH_INIT = {};
+var MISSED = {};
+function watchNew(coll, qs, label, tab){
+  if(!WATCH_INIT[coll]){
+    WATCH_INIT[coll]=true;
+    // Lo que agregó mientras tenías la app cerrada.
+    if(BOOT_LAST_SEEN && ROLE){
+      qs.docs.forEach(function(d){
+        var v=d.data();
+        if(v && v.by && v.by!==ROLE && v.ts && v.ts>BOOT_LAST_SEEN){
+          if(!MISSED[coll]) MISSED[coll]={n:0,label:label,tab:tab};
+          MISSED[coll].n++;
+        }
+      });
+    }
+    return;
+  }
+  qs.docChanges().forEach(function(ch){
+    if(ch.type!=="added") return;
+    if(ch.doc.metadata.hasPendingWrites) return;
+    var v=ch.doc.data();
+    if(!v || !ROLE || !v.by || v.by===ROLE) return;
+    if(v.ts && v.ts < BOOT_TS-60000) return; // es algo viejo que reapareció al borrar otro
+    partnerActivity(label, tab);
+  });
+}
+function flushMissed(){
+  var parts=[], firstTab=null;
+  Object.keys(MISSED).forEach(function(k){
+    var m=MISSED[k];
+    parts.push(m.n>1 ? m.label+" (×"+m.n+")" : m.label);
+    markTabDot(m.tab);
+    if(!firstTab) firstTab=m.tab;
+  });
+  MISSED={};
+  if(!parts.length || !ROLE) return;
+  var msg = "Mientras no estabas, "+(partnerName()||"tu pareja")+" "+parts.join(", ");
+  showBanner("missed", '<div>💌 '+esc(msg)+'</div>', true);
+}
+
+// Documento principal: humor, preguntas, esto-o-aquello.
+var PREV_PARTNER = null;
+function partnerSnapshot(st){
+  var o=otherRole(ROLE);
+  var qa={};
+  Object.keys(st.questions||{}).forEach(function(k){
+    var b=st.questions[k]||{};
+    if(b.answers && b.answers[o]) qa[k]=JSON.stringify(b.answers[o]);
+  });
+  var tot={};
+  Object.keys(st.thisOrThat||{}).forEach(function(k){
+    var b=st.thisOrThat[k]||{};
+    if(b.picks && b.picks[o]) tot[k]=JSON.stringify(b.picks[o]);
+  });
+  var md = st.moods && st.moods[o];
+  return {mood: md ? md.em+"|"+md.label+"|"+md.date : "", qa:qa, tot:tot};
+}
+function diffStateForPartner(st){
+  if(!ROLE || !st) return;
+  var cur = partnerSnapshot(st);
+  var prev = PREV_PARTNER;
+  PREV_PARTNER = cur;
+  if(!prev){
+    // Primera carga: ¿respondió preguntas mientras no estabas?
+    if(BOOT_LAST_SEEN){
+      var o=otherRole(ROLE);
+      Object.keys(st.questions||{}).forEach(function(k){
+        var at = st.questions[k] && st.questions[k].at && st.questions[k].at[o];
+        if(at && at>BOOT_LAST_SEEN){ MISSED.questions={n:1,label:"respondió preguntas 💬",tab:"preguntas"}; }
+      });
+      var md = st.moods && st.moods[o];
+      if(md && md.date===todayStr() && prevMoodUnseen(md)) MISSED.mood={n:1,label:"puso cómo se siente hoy "+md.em,tab:"inicio"};
+    }
+    return;
+  }
+  if(cur.mood && cur.mood!==prev.mood){
+    var m = st.moods[otherRole(ROLE)];
+    prevMoodUnseen(m);
+    partnerActivity("hoy se siente "+m.em+" "+m.label, "inicio");
+  }
+  var qChanged = Object.keys(cur.qa).some(function(k){ return cur.qa[k]!==prev.qa[k]; });
+  if(qChanged) partnerActivity("respondió las preguntas 💬", "preguntas");
+  var tChanged = Object.keys(cur.tot).some(function(k){ return cur.tot[k]!==prev.tot[k]; });
+  if(tChanged) partnerActivity("eligió en Esto o aquello 🎲", "juegos");
+}
+function prevMoodUnseen(md){
+  var key="sn_seen_mood_v1", val=md.em+"|"+md.label+"|"+md.date, old=null;
+  try{ old=localStorage.getItem(key); localStorage.setItem(key,val); }catch(e){}
+  return old!==val;
+}
+
+// Presencia: avisa cuando tu pareja entra a la app o te escribe en vivo, y
+// detecta si dos celulares están usando el mismo lado.
+var presenceInit=false, lastOnlineNotif=0, lastTypingNotif=0, prevTyping="";
+function onPresenceChange(val, partnerData, wasOnline){
+  var mine = ROLE ? val[ROLE] : null;
+  if(mine && mine.device && mine.device!==DEVICE_ID && (Date.now()-(mine.updatedAt||0))<20000){
+    showRoleConflict();
+  }
+  if(!presenceInit){ presenceInit=true; prevTyping = partnerData && partnerData.typing || ""; return; }
+  if(partnerData && !wasOnline && Date.now()-lastOnlineNotif > 20*60*1000){
+    lastOnlineNotif=Date.now();
+    partnerActivity("entró a la app 💞", "vivo");
+  }
+  var typing = partnerData && partnerData.typing || "";
+  var vivoActive = document.getElementById("tab-vivo") && document.getElementById("tab-vivo").classList.contains("active");
+  if(typing && !prevTyping && (!vivoActive || document.hidden) && Date.now()-lastTypingNotif > 2*60*1000){
+    lastTypingNotif=Date.now();
+    partnerActivity("te está escribiendo en vivo ✨", "vivo");
+  }
+  prevTyping = typing;
+}
+var roleConflictShown=false;
+function showRoleConflict(){
+  if(roleConflictShown || !STATE) return;
+  roleConflictShown=true;
+  var me = myName() || "tú", other = partnerName() || "la otra persona";
+  showBanner("role",
+    '<div>⚠️ <b>Otro celular también está entrando como '+esc(me)+'.</b> Por eso lo que escribe uno no le aparece al otro como "de su pareja". Cada quien debe estar en su propio lado.</div>'+
+    '<div class="row"><button class="btn" id="switchRoleBtn">Yo soy '+esc(other)+'</button>'+
+    '<button class="btn ghost" id="keepRoleBtn">Yo sí soy '+esc(me)+'</button></div>');
+  var sw=document.getElementById("switchRoleBtn");
+  if(sw) sw.onclick=function(){
+    rremove(rref(rtdb, "presence/"+ROLE)).catch(function(){});
+    hideBanner(); claimRole(otherRole(ROLE)); location.reload();
+  };
+  var kp=document.getElementById("keepRoleBtn");
+  if(kp) kp.onclick=function(){ hideBanner(); };
+}
+
+// Banner superior
+function showBanner(id, html, closable){
+  var el=document.getElementById("appBanner");
+  if(!el) return;
+  el.setAttribute("data-id", id);
+  el.innerHTML = html + (closable ? '<div class="row"><button class="btn ghost" id="bannerCloseBtn">Ok</button></div>' : '');
+  el.hidden=false;
+  var c=document.getElementById("bannerCloseBtn");
+  if(c) c.onclick=hideBanner;
+}
+function hideBanner(){ var el=document.getElementById("appBanner"); if(el){ el.hidden=true; el.innerHTML=""; } }
+
+// Versión nueva: si subiste cambios a Netlify, el celular de tu pareja se
+// entera y le pide recargar (así no se queda con una versión vieja).
+function checkForUpdate(){
+  if(!/^https?:/.test(location.protocol)) return;
+  fetch(location.pathname.replace(/[^\/]*$/,"")+"index.html?_="+Date.now(), {cache:"no-store"})
+    .then(function(r){ return r.ok ? r.text() : ""; })
+    .then(function(txt){
+      var m = txt && txt.match(/var APP_VERSION = "([^"]+)"/);
+      if(m && m[1]!==APP_VERSION){
+        showBanner("update", '<div>✨ Hay una versión nueva de la app.</div><div class="row"><button class="btn" id="reloadAppBtn">Actualizar</button></div>');
+        var b=document.getElementById("reloadAppBtn");
+        if(b) b.onclick=function(){ location.reload(); };
+      }
+    }).catch(function(){});
+}
+setTimeout(checkForUpdate, 4000);
+setInterval(checkForUpdate, 10*60*1000);
+
+// Aviso con la app cerrada (ntfy.sh). Lo manda quien hace la acción.
+var lastPing = {};
+function pingPartner(text, kind){
+  if(!STATE || !ROLE) return;
+  var cfg = STATE.push && STATE.push[otherRole(ROLE)];
+  if(!cfg || !cfg.on || !cfg.topic) return;
+  var k = kind || text;
+  var wait = (kind==="heart" || kind==="tot" || kind==="questions") ? 3*60*1000 : 20000;
+  if(lastPing[k] && Date.now()-lastPing[k] < wait) return;
+  lastPing[k]=Date.now();
+  sendNtfy(cfg.topic, (myName()||"Tu pareja")+" "+text);
+}
+function sendNtfy(topic, body){
+  var url = "https://ntfy.sh/"+encodeURIComponent(topic)+"?title="+encodeURIComponent("Solo Nosotros")+"&tags=two_hearts";
+  if(/^https?:/.test(location.protocol)) url += "&click="+encodeURIComponent(location.href.split("#")[0].split("?")[0]);
+  return fetch(url, {method:"POST", body: body}).catch(function(){});
+}
+function randomTopic(){
+  var chars="abcdefghijkmnpqrstuvwxyz23456789", t="";
+  for(var i=0;i<12;i++) t+=chars[Math.floor(Math.random()*chars.length)];
+  return "solonosotros-"+t;
+}
+
+// Tarjeta de avisos en Inicio
+document.getElementById("enableNotifBtn").addEventListener("click", function(){
+  if(!("Notification" in window)){
+    toastMsg("Este navegador no permite avisos. En iPhone: agrega la app a la pantalla de inicio primero.");
+    return;
+  }
+  Notification.requestPermission().then(function(p){
+    renderNotifCard();
+    if(p==="granted"){ systemNotify("¡Listo! Así te van a llegar los avisos 💞", "inicio"); }
+  });
+});
+function renderNotifCard(){
+  var st=document.getElementById("notifStatus"), btn=document.getElementById("enableNotifBtn");
+  var box=document.getElementById("pushSetup");
+  if(!st || !box || !STATE || !ROLE) return;
+  if(!("Notification" in window)){
+    st.textContent = "Este navegador no permite avisos del sistema (en iPhone primero agrega la app a la pantalla de inicio). Igual verás avisos dentro de la app.";
+    btn.hidden=true;
+  } else if(Notification.permission==="granted"){
+    st.textContent = "✅ Avisos activados en este celular mientras la app esté abierta o minimizada.";
+    btn.hidden=true;
+  } else if(Notification.permission==="denied"){
+    st.textContent = "Bloqueaste los avisos. Actívalos en los ajustes del navegador para este sitio.";
+    btn.hidden=true;
+  } else {
+    st.textContent = "";
+    btn.hidden=false;
+  }
+  var cfg = STATE.push && STATE.push[ROLE];
+  var pName = partnerName() || "tu pareja";
+  if(cfg && cfg.on && cfg.topic){
+    box.innerHTML =
+      '<h3 style="margin-top:4px;">📲 Avisos con la app cerrada: activados</h3>'+
+      '<p class="muted">1. Instala gratis la app <b>ntfy</b> (Play Store o App Store).<br/>2. Ábrela, toca <b>+</b> y suscríbete a este tema:</p>'+
+      '<div class="row" style="margin:8px 0;"><div class="topic-box" id="topicText">'+esc(cfg.topic)+'</div><button class="btn secondary" id="copyTopicBtn">Copiar</button></div>'+
+      '<p class="muted">Listo: cada vez que '+esc(pName)+' llene algo nuevo te llega un aviso aunque la app esté cerrada. No compartas ese nombre con nadie.</p>'+
+      '<div class="row" style="margin-top:8px;"><button class="btn secondary" id="testPushBtn">Probar aviso</button><button class="btn ghost" id="disablePushBtn">Desactivar</button></div>';
+    document.getElementById("copyTopicBtn").onclick=function(){
+      try{ navigator.clipboard.writeText(cfg.topic).then(function(){ toastMsg("Copiado 📋"); }); }catch(e){ toastMsg(cfg.topic); }
+    };
+    document.getElementById("testPushBtn").onclick=function(){
+      sendNtfy(cfg.topic, "Prueba: así te van a llegar los avisos de "+pName+" 💞");
+      toastMsg("Aviso de prueba enviado");
+    };
+    document.getElementById("disablePushBtn").onclick=function(){
+      updateDoc(docRef, {["push."+ROLE+".on"]: false}).catch(function(){});
+    };
+  } else {
+    box.innerHTML =
+      '<h3 style="margin-top:4px;">📲 ¿Quieres avisos aunque la app esté cerrada?</h3>'+
+      '<p class="muted">Se hace con la app gratis <b>ntfy</b> (no pide cuenta ni tarjeta). Cada quien lo activa en su propio celular.</p>'+
+      '<button class="btn secondary block" id="enablePushBtn" style="margin-top:8px;">Activar avisos con la app cerrada</button>';
+    document.getElementById("enablePushBtn").onclick=function(){
+      var topic = (cfg && cfg.topic) || randomTopic();
+      updateDoc(docRef, {["push."+ROLE]: {topic:topic, on:true}}).catch(function(){ alert("No se pudo activar, intenta de nuevo."); });
+    };
+  }
+}
+
+/* ---------------- master render ---------------- */
+function renderAll(){
+  if(!ROLE || !STATE || !STATE.names[ROLE]){
+    elOnboard.hidden=false; elMain.hidden=true; elTabbar.hidden=true;
+    renderTop();
+    renderOnboard();
+    return;
+  }
+  elOnboard.hidden=true; elMain.hidden=false; elTabbar.hidden=false;
+  renderTop();
+  renderTogether();
+  renderStats();
+  renderSpecialDate();
+  renderNicknames();
+  renderCapsules();
+  renderMood();
+  renderNotes();
+  renderMusic();
+  renderPhotos();
+  renderQuestions();
+  renderThisOrThat();
+  renderTTT();
+  renderMemo();
+  renderWheelHistory();
+  renderTDHistory();
+  renderBucket();
+  renderVoiceNotes();
+  renderNotifCard();
+}
+
+/* ---------------- boot ---------------- */
+async function boot(){
+  renderAll();
+  if(!fbReady){ renderOnboard(); return; }
+
+  try{
+    await new Promise(function(resolve){
+      onAuthStateChanged(auth, function(user){
+        if(user){ myUid=user.uid; resolve(); }
+        else { signInAnonymously(auth).catch(function(e){ fbError=e; resolve(); }); }
+      });
+    });
+  }catch(e){ fbError=e; }
+
+  if(fbError){ renderOnboard(); return; }
+
+  docRef = doc(db, "couple", "state");
+  try{
+    var snap = await getDoc(docRef);
+    if(!snap.exists()){ await setDoc(docRef, initialState()); }
+  }catch(e){ console.error(e); }
+
+  onSnapshot(docRef, function(snap){
+    STATE = snap.exists() ? snap.data() : initialState();
+    if(!STATE.moods) STATE.moods={a:null,b:null};
+    if(!STATE.names) STATE.names={a:null,b:null};
+    if(!STATE.streak) STATE.streak={count:0,lastDate:null};
+    if(!STATE.questions) STATE.questions={};
+    if(!STATE.thisOrThat) STATE.thisOrThat={};
+    if(STATE.heartsSent==null) STATE.heartsSent=0;
+    if(!STATE.tttWins) STATE.tttWins={a:0,b:0};
+    diffStateForPartner(STATE);
+    renderAll();
+    if(ROLE && STATE.names[ROLE]) startPresence();
+  }, function(err){ console.error(err); });
+
+  onSnapshot(query(collection(db,"photos"), orderBy("ts","desc"), limit(24)), function(qs){
+    watchNew("photos", qs, "subió una foto 📷", "fotos");
+    PHOTOS = qs.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    renderPhotos(); renderStats();
+  }, function(err){ console.error(err); });
+
+  onSnapshot(query(collection(db,"notes"), orderBy("ts","desc"), limit(20)), function(qs){
+    watchNew("notes", qs, "te dejó una notita 💌", "inicio");
+    NOTES = qs.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    renderNotes(); renderStats();
+  }, function(err){ console.error(err); });
+
+  onSnapshot(query(collection(db,"songs"), orderBy("ts","desc"), limit(40)), function(qs){
+    watchNew("songs", qs, "te compartió una canción 🎵", "musica");
+    SONGS = qs.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    renderMusic();
+  }, function(err){ console.error(err); });
+
+  onSnapshot(query(collection(db,"wheelHistory"), orderBy("ts","desc"), limit(20)), function(qs){
+    WHEEL_HIST = qs.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    renderWheelHistory();
+  }, function(err){ console.error(err); });
+
+  onSnapshot(query(collection(db,"tdHistory"), orderBy("ts","desc"), limit(20)), function(qs){
+    TD_HIST = qs.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    renderTDHistory();
+  }, function(err){ console.error(err); });
+
+  onSnapshot(query(collection(db,"bucketList"), orderBy("ts","asc"), limit(100)), function(qs){
+    watchNew("bucketList", qs, "agregó un plan a su lista ✅", "juegos");
+    BUCKET = qs.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    renderBucket(); renderStats();
+  }, function(err){ console.error(err); });
+
+  onSnapshot(query(collection(db,"voiceNotes"), orderBy("ts","desc"), limit(20)), function(qs){
+    watchNew("voiceNotes", qs, "te mandó una nota de voz 🎤", "vivo");
+    VOICE_NOTES = qs.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    renderVoiceNotes();
+  }, function(err){ console.error(err); });
+
+  onSnapshot(query(collection(db,"nicknames"), orderBy("ts","desc"), limit(30)), function(qs){
+    watchNew("nicknames", qs, "agregó un apodo nuevo 💞", "inicio");
+    NICKNAMES = qs.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    renderNicknames();
+  }, function(err){ console.error(err); });
+
+  onSnapshot(query(collection(db,"timeCapsules"), orderBy("revealAt","asc"), limit(50)), function(qs){
+    watchNew("timeCapsules", qs, "guardó una cápsula del tiempo 🔒", "vivo");
+    CAPSULES = qs.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    renderCapsules();
+  }, function(err){ console.error(err); });
+
+  watchRealtime();
+  watchTTT();
+  setTimeout(flushMissed, 2500);
+  watchMemo();
+  if(ROLE) startPresence();
+}
+boot();
+</script>
+</body>
+</html>
