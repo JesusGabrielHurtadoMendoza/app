@@ -1,0 +1,13 @@
+{
+  "name": "Solo Nosotros",
+  "short_name": "Nosotros",
+  "description": "Un espacio privado para ustedes dos.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FFF1E9",
+  "theme_color": "#E1436B",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

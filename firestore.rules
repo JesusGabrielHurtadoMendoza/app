@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Cualquier persona autenticada (incluye login anónimo) puede leer y
+    // escribir. Como el login es anónimo y silencioso, esto en la práctica
+    // significa "cualquiera que tenga el link de la app". Es un nivel de
+    // seguridad tipo "link privado", suficiente para un proyecto personal
+    // de pareja, pero no lo compartas públicamente.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
